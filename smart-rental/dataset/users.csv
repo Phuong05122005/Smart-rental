@@ -1,0 +1,6 @@
+id,username,full_name,role,status
+"189d0fa7-8e9b-4e9d-bbae-5b13808e930d","admin","Quản trị viên","ADMIN","ACTIVE"
+"bb5be24f-bdbe-48fd-be27-d5ef8cbf6908","landlord1","Trần Thị Mai","LANDLORD","ACTIVE"
+"f59dc375-16b1-4c5d-a2b0-786c31189de6","landlord2","Lê Hoàng Nam","LANDLORD","ACTIVE"
+"b9d58402-74ea-4b46-88ff-c1d95c31525c","staff1","Nguyễn Văn An","STAFF","ACTIVE"
+"58e00574-8f03-4147-9488-c7beb2525ebc","staff2","Phạm Thanh Bình","STAFF","LOCKED"

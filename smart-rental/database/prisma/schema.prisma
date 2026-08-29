@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  LANDLORD
+  STAFF
+}
+
+enum UserStatus {
+  ACTIVE
+  LOCKED
+}
+
+enum RoomStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model User {
+  id            String     @id @default(uuid())
+  username      String     @unique
+  password_hash String
+  full_name     String
+  role          Role       @default(STAFF)
+  status        UserStatus @default(ACTIVE)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  notifications Notification[]
+  audit_logs    AuditLog[]     @relation("UserAuditLogs")
+
+  @@map("users")
+}
+
+model Room {
+  id          String     @id @default(uuid())
+  room_number String     @unique
+  room_type   String
+  price       Decimal    @db.Decimal(10, 2)
+  area        Decimal    @db.Decimal(8, 2)
+  description String?
+  status      RoomStatus @default(AVAILABLE)
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  contracts Contract[]
+
+  @@map("rooms")
+}
+
+model Tenant {
+  id              String   @id @default(uuid())
+  full_name       String
+  identity_number String   @unique
+  phone           String
+  email           String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  contracts Contract[]
+
+  @@map("tenants")
+}
+
+model Contract {
+  id         String         @id @default(uuid())
+  tenant_id  String
+  room_id    String
+  start_date DateTime
+  end_date   DateTime
+  rent_price Decimal        @db.Decimal(10, 2)
+  deposit    Decimal        @db.Decimal(10, 2)
+  status     ContractStatus @default(ACTIVE)
+  created_at DateTime       @default(now())
+  updated_at DateTime       @updatedAt
+
+  // Cascade rules: Cannot delete Room or Tenant if Contract exists.
+  tenant Tenant @relation(fields: [tenant_id], references: [id], onDelete: Restrict)
+  room   Room   @relation(fields: [room_id], references: [id], onDelete: Restrict)
+
+  @@index([tenant_id])
+  @@index([room_id])
+  @@map("contracts")
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  title      String
+  content    String
+  type       String
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  // Cascade: Delete notifications if User is deleted
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actor_id    String? // Made nullable in case system performs action
+  action      String
+  target_type String
+  target_id   String
+  old_value   String?  @db.Text
+  new_value   String?  @db.Text
+  created_at  DateTime @default(now())
+
+  // SetNull: If user is deleted, keep the audit log but clear actor_id
+  actor User? @relation("UserAuditLogs", fields: [actor_id], references: [id], onDelete: SetNull)
+
+  @@index([actor_id])
+  @@index([target_type, target_id])
+  @@map("audit_logs")
+}
