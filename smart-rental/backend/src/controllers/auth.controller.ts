@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
+import { AuthRequest } from '../middlewares/auth.middleware';
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -33,14 +34,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Generate JWT
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '1d' }
     );
 
-    // Audit Log
     await prisma.auditLog.create({
       data: {
         actor_id: user.id,
@@ -67,8 +66,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const logout = async (req: Request, res: Response): Promise<void> => {
-  // In stateless JWT, logout is usually handled client-side by deleting the token.
-  // We can just return success here, and optionally log the audit event if req.user exists.
   res.json({ message: 'Đăng xuất thành công' });
 };
 
@@ -94,5 +91,81 @@ export const getMe = async (req: any, res: Response): Promise<void> => {
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server nội bộ.' });
+  }
+};
+
+export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = req.user;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!user) {
+      res.status(401).json({ message: 'Chưa đăng nhập' });
+      return;
+    }
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ message: 'Vui lòng nhập đủ thông tin.' });
+      return;
+    }
+
+    const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+    if (!dbUser) {
+      res.status(404).json({ message: 'Không tìm thấy tài khoản.' });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, dbUser.password_hash);
+    if (!isMatch) {
+      res.status(400).json({ message: 'Mật khẩu hiện tại không đúng.' });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password_hash: hashedPassword }
+    });
+
+    res.json({ message: 'Đổi mật khẩu thành công!' });
+  } catch (error) {
+    console.error('[changePassword]', error);
+    res.status(500).json({ message: 'Lỗi server.' });
+  }
+};
+
+export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = req.user;
+    const { full_name } = req.body;
+    
+    if (!user) {
+      res.status(401).json({ message: 'Chưa đăng nhập' });
+      return;
+    }
+
+    if (!full_name) {
+      res.status(400).json({ message: 'Vui lòng nhập họ tên.' });
+      return;
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { full_name }
+    });
+
+    // If it's a TENANT, also update the Tenant record so they are synced
+    if (user.role === 'TENANT') {
+      await prisma.tenant.updateMany({
+        where: { user_id: user.id },
+        data: { full_name }
+      });
+    }
+
+    res.json({ message: 'Cập nhật thông tin thành công!' });
+  } catch (error) {
+    console.error('[updateProfile]', error);
+    res.status(500).json({ message: 'Lỗi server.' });
   }
 };

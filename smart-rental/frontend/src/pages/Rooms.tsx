@@ -11,8 +11,12 @@ import { ErrorState } from '../components/ui/ErrorState';
 import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getRooms, createRoom, updateRoom, deleteRoom, type Room } from '../services/roomService';
+import { useAuth } from '../contexts/AuthContext';
 
 const Rooms = () => {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'ADMIN' || user?.role === 'LANDLORD';
+
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -134,79 +138,115 @@ const Rooms = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-xl font-bold text-slate-800">Quản lý phòng</h2>
-        <Button className="gap-2" onClick={() => openForm()}><Plus className="w-4 h-4" /> Thêm phòng mới</Button>
+        {canEdit && (
+          <Button className="gap-2" onClick={() => openForm()}><Plus className="w-4 h-4" /> Thêm phòng mới</Button>
+        )}
       </div>
 
-      <Card>
-        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center">
-          <form onSubmit={handleSearch} className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      <Card className="shadow-sm border-slate-100 overflow-hidden rounded-xl">
+        <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row gap-4 items-center bg-slate-50/50">
+          <form onSubmit={handleSearch} className="relative w-full sm:w-72">
+            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input 
-              className="pl-9" 
+              className="pl-10 h-10 border-slate-200 focus:border-blue-500 shadow-sm rounded-lg" 
               placeholder="Tìm số phòng, loại..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </form>
           <select 
-            className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-light w-full sm:w-auto"
+            className="px-4 h-10 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full sm:w-auto shadow-sm cursor-pointer transition-colors"
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           >
             <option value="">Tất cả trạng thái</option>
-            <option value="AVAILABLE">Trống</option>
+            <option value="AVAILABLE">Phòng trống</option>
             <option value="RENTED">Đang thuê</option>
             <option value="MAINTENANCE">Bảo trì</option>
           </select>
         </div>
         
         {loading ? (
-          <div className="p-8 text-center text-slate-500">Đang tải dữ liệu...</div>
+          <div className="p-12 text-center text-slate-500 flex flex-col items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+            Đang tải dữ liệu phòng...
+          </div>
         ) : error ? (
           <ErrorState message={error} />
         ) : rooms.length === 0 ? (
           <EmptyState title="Không tìm thấy phòng" description="Chưa có phòng nào hoặc không khớp với tìm kiếm." />
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Phòng</TableHead>
-                  <TableHead>Loại phòng</TableHead>
-                  <TableHead>Giá (VNĐ)</TableHead>
-                  <TableHead>Diện tích (m2)</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Khách thuê</TableHead>
-                  <TableHead>Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <tbody>
-                {rooms.map((room) => (
-                  <TableRow key={room.id}>
-                    <TableCell className="font-medium text-slate-900">{room.room_number}</TableCell>
-                    <TableCell>{room.room_type}</TableCell>
-                    <TableCell>{Number(room.price).toLocaleString('vi-VN')}</TableCell>
-                    <TableCell>{room.area}</TableCell>
-                    <TableCell>{getStatusBadge(room.status)}</TableCell>
-                    <TableCell>{room.current_tenant || '-'}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <button onClick={() => openForm(room)} className="text-slate-400 hover:text-primary transition-colors"><Edit2 className="w-4 h-4" /></button>
-                        <button onClick={() => confirmDelete(room)} className="text-slate-400 hover:text-danger transition-colors"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table className="w-full text-sm text-left">
+                <TableHeader className="bg-slate-50/80 border-b border-slate-100 uppercase text-xs font-semibold text-slate-500 tracking-wider">
+                  <TableRow>
+                    <TableHead className="py-4 pl-6">Phòng</TableHead>
+                    <TableHead className="py-4">Loại phòng</TableHead>
+                    <TableHead className="py-4">Giá (VNĐ)</TableHead>
+                    <TableHead className="py-4 text-center">Diện tích (m²)</TableHead>
+                    <TableHead className="py-4 text-center">Trạng thái</TableHead>
+                    <TableHead className="py-4">Khách thuê</TableHead>
+                    {canEdit && <TableHead className="py-4 text-right pr-6">Thao tác</TableHead>}
                   </TableRow>
-                ))}
-              </tbody>
-            </Table>
+                </TableHeader>
+                <tbody className="divide-y divide-slate-100">
+                  {rooms.map((room) => (
+                    <TableRow key={room.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <TableCell className="pl-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold border border-blue-100">
+                            {room.room_number}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-4 font-medium text-slate-700">{room.room_type || '-'}</TableCell>
+                      <TableCell className="py-4 font-semibold text-slate-800">{Number(room.price).toLocaleString('vi-VN')} đ</TableCell>
+                      <TableCell className="py-4 text-center text-slate-600">{room.area}</TableCell>
+                      <TableCell className="py-4 text-center">{getStatusBadge(room.status)}</TableCell>
+                      <TableCell className="py-4">
+                        {room.contracts && room.contracts.length > 0 ? (
+                          <div className="flex flex-col gap-1">
+                            {room.contracts.filter(c => c.status === 'ACTIVE').map(c => (
+                              <div key={c.id} className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                <span className="text-sm font-medium text-slate-700">
+                                  {c.tenant.full_name}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                            Trống
+                          </span>
+                        )}
+                      </TableCell>
+                      {canEdit && (
+                        <TableCell className="py-4 pr-6 text-right">
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => openForm(room)} className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Sửa">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => confirmDelete(room)} className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Xóa">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
             
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="p-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-sm text-slate-500">Trang {page} / {totalPages}</span>
+              <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-white rounded-b-xl">
+                <span className="text-sm font-medium text-slate-500">Trang {page} / {totalPages}</span>
                 <div className="flex gap-2">
-                  <Button variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>Trước</Button>
-                  <Button variant="outline" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Sau</Button>
+                  <Button variant="outline" className="h-9 px-4 text-sm font-medium" disabled={page === 1} onClick={() => setPage(page - 1)}>Trước</Button>
+                  <Button variant="outline" className="h-9 px-4 text-sm font-medium" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Sau</Button>
                 </div>
               </div>
             )}

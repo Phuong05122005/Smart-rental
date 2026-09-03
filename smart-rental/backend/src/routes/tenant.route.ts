@@ -12,6 +12,9 @@ router.get('/', getTenants);
 router.get('/:id', getTenant);
 router.post('/', authorize(['ADMIN', 'LANDLORD', 'STAFF']), createTenant);
 router.put('/:id', authorize(['ADMIN', 'LANDLORD', 'STAFF']), updateTenant);
+import { createAccount } from '../controllers/tenant-account.controller';
+
 router.delete('/:id', authorize(['ADMIN', 'LANDLORD', 'STAFF']), deleteTenant);
+router.post('/:id/account', authorize(['ADMIN', 'LANDLORD', 'STAFF']), createAccount);
 
 export default router;

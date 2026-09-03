@@ -16,10 +16,12 @@ export const getNotifications = async () => {
 
 export const markAsRead = async (id: string) => {
   const response = await api.patch(`/notifications/${id}/read`);
+  window.dispatchEvent(new Event('notificationsUpdated'));
   return response.data;
 };
 
 export const markAllAsRead = async () => {
   const response = await api.patch('/notifications/read-all');
+  window.dispatchEvent(new Event('notificationsUpdated'));
   return response.data;
 };

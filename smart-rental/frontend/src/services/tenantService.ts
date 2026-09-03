@@ -8,6 +8,7 @@ export interface Tenant {
   email: string | null;
   current_room?: string | null;
   status?: 'RENTING' | 'INACTIVE';
+  user_id?: string | null;
 }
 
 export const getTenants = async (params?: any) => {
@@ -32,5 +33,10 @@ export const updateTenant = async (id: string, data: Partial<Tenant>) => {
 
 export const deleteTenant = async (id: string) => {
   const response = await api.delete(`/tenants/${id}`);
+  return response.data;
+};
+
+export const createTenantAccount = async (id: string) => {
+  const response = await api.post(`/tenants/${id}/account`);
   return response.data;
 };

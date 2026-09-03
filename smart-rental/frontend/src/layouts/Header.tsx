@@ -1,18 +1,44 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Search, Bell, User, Menu } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Header = ({ toggleMobileSidebar }: { toggleMobileSidebar: () => void }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
+  
   const [unreadCount, setUnreadCount] = React.useState(0);
+  const [notifications, setNotifications] = React.useState<any[]>([]);
+  const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   React.useEffect(() => {
-    import('../services/notificationService').then(m => {
-      m.getNotifications().then(data => setUnreadCount(data.filter((n: any) => !n.is_read).length));
-    }).catch(() => {});
+    const fetchNotifications = () => {
+      import('../services/notificationService').then(m => {
+        m.getNotifications().then(data => {
+          setNotifications(data.slice(0, 5));
+          setUnreadCount(data.filter((n: any) => !n.is_read).length);
+        });
+      }).catch(() => {});
+    };
+
+    fetchNotifications();
+
+    window.addEventListener('notificationsUpdated', fetchNotifications);
+    return () => window.removeEventListener('notificationsUpdated', fetchNotifications);
   }, []);
   
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsNotificationOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const pathMap: Record<string, string> = {
     '/dashboard': 'Tổng quan',
     '/rooms': 'Quản lý phòng',
@@ -52,10 +78,31 @@ export const Header = ({ toggleMobileSidebar }: { toggleMobileSidebar: () => voi
           />
         </div>
 
-        <button className="relative text-slate-500 hover:text-primary transition-colors">
-          <Bell className="w-5 h-5" />
-          {unreadCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-danger rounded-full border-2 border-white text-[9px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
-        </button>
+        <div className="relative" ref={dropdownRef}>
+          <button onClick={() => setIsNotificationOpen(!isNotificationOpen)} className="relative text-slate-500 hover:text-primary transition-colors flex items-center justify-center">
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-danger rounded-full border-2 border-white text-[9px] font-bold text-white flex items-center justify-center">{unreadCount}</span>}
+          </button>
+          
+          {isNotificationOpen && (
+            <div className="absolute right-0 mt-3 w-80 bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden z-50">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <span className="font-semibold text-slate-800">Thông báo</span>
+                <span className="text-xs text-primary cursor-pointer hover:underline" onClick={() => { setIsNotificationOpen(false); navigate('/notifications'); }}>Xem tất cả</span>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length > 0 ? notifications.map(notif => (
+                  <div key={notif.id} className={`p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer ${!notif.is_read ? 'bg-blue-50/10' : ''}`}>
+                    <p className={`text-sm ${!notif.is_read ? 'font-semibold' : 'font-medium'} text-slate-800`}>{notif.title}</p>
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{notif.content}</p>
+                  </div>
+                )) : (
+                  <div className="p-4 text-center text-sm text-slate-500">Không có thông báo nào</div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-2 cursor-pointer border-l border-slate-200 pl-4 lg:pl-6">
           <div className="w-8 h-8 rounded-full bg-primary-light text-white flex items-center justify-center">

@@ -5,7 +5,7 @@ export interface User {
   id: string;
   username: string;
   full_name: string;
-  role: 'ADMIN' | 'LANDLORD' | 'STAFF';
+  role: 'ADMIN' | 'LANDLORD' | 'STAFF' | 'TENANT';
 }
 
 interface AuthContextType {
@@ -49,7 +49,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-    navigate('/dashboard');
+    if (userData.role === 'TENANT') {
+      navigate('/my-room');
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const logout = () => {

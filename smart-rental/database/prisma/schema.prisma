@@ -11,6 +11,7 @@ enum Role {
   ADMIN
   LANDLORD
   STAFF
+  TENANT
 }
 
 enum UserStatus {
@@ -30,6 +31,19 @@ enum ContractStatus {
   CANCELLED
 }
 
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  OVERDUE
+}
+
+enum RequestStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
 model User {
   id            String     @id @default(uuid())
   username      String     @unique
@@ -42,6 +56,7 @@ model User {
 
   notifications Notification[]
   audit_logs    AuditLog[]     @relation("UserAuditLogs")
+  tenant        Tenant?
 
   @@map("users")
 }
@@ -58,6 +73,7 @@ model Room {
   updated_at  DateTime   @updatedAt
 
   contracts Contract[]
+  maintenance_requests MaintenanceRequest[]
 
   @@map("rooms")
 }
@@ -68,10 +84,13 @@ model Tenant {
   identity_number String   @unique
   phone           String
   email           String?
+  user_id         String?  @unique
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
   contracts Contract[]
+  maintenance_requests MaintenanceRequest[]
+  user                 User?      @relation(fields: [user_id], references: [id], onDelete: SetNull)
 
   @@map("tenants")
 }
@@ -91,6 +110,7 @@ model Contract {
   // Cascade rules: Cannot delete Room or Tenant if Contract exists.
   tenant Tenant @relation(fields: [tenant_id], references: [id], onDelete: Restrict)
   room   Room   @relation(fields: [room_id], references: [id], onDelete: Restrict)
+  invoices Invoice[]
 
   @@index([tenant_id])
   @@index([room_id])
@@ -129,4 +149,41 @@ model AuditLog {
   @@index([actor_id])
   @@index([target_type, target_id])
   @@map("audit_logs")
+}
+
+
+model Invoice {
+  id          String        @id @default(uuid())
+  contract_id String
+  title       String
+  amount      Decimal       @db.Decimal(10, 2)
+  issue_date  DateTime      @default(now())
+  due_date    DateTime
+  status      InvoiceStatus @default(UNPAID)
+  description String?       @db.Text
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+
+  contract Contract @relation(fields: [contract_id], references: [id], onDelete: Cascade)
+
+  @@index([contract_id])
+  @@map("invoices")
+}
+
+model MaintenanceRequest {
+  id          String        @id @default(uuid())
+  tenant_id   String
+  room_id     String
+  title       String
+  description String        @db.Text
+  status      RequestStatus @default(PENDING)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+
+  tenant Tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  room   Room   @relation(fields: [room_id], references: [id], onDelete: Cascade)
+
+  @@index([tenant_id])
+  @@index([room_id])
+  @@map("maintenance_requests")
 }

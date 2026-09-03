@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import fs from 'fs';
-import path from 'path';
-import csv from 'csv-parser';
+const fs = require('fs');
+const path = require('path');
+const csv = require('csv-parser');
 
 const prisma = new PrismaClient();
 
@@ -37,8 +37,8 @@ async function main() {
 
   console.log('Seeding Users...');
   for (const u of users) {
-    // Basic hash for '123456'
-    const password_hash = '$2a$10$X7x2E3L9lT3B1B9sR7.o6u9B2.7M6o1Q9Q5N4/9U6G1A4V8B2.o6u';
+    // Basic hash for '123456' generated from bcryptjs
+    const password_hash = '$2b$10$4WaF9UOyo.3PAHvkfpF/OuCpBHYz.zWPc2VYU6Tg6128Vw8o.WTPu';
     await prisma.user.create({
       data: {
         id: u.id,

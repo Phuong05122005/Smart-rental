@@ -29,3 +29,14 @@ export const RoleRoute = ({ children, allowedRoles }: { children: React.ReactNod
 
   return <>{children}</>;
 };
+
+export const RootRedirect = () => {
+  const { user } = useAuth();
+  if (user?.role === 'TENANT') {
+    return <Navigate to="/my-room" replace />;
+  }
+  if (user?.role === 'STAFF') {
+    return <Navigate to="/rooms" replace />;
+  }
+  return <Navigate to="/dashboard" replace />;
+};

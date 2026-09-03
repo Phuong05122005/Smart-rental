@@ -10,26 +10,23 @@ import dashboardRoute from './routes/dashboard.route';
 import notificationRoute from './routes/notification.route';
 import reportRoute from './routes/report.route';
 import auditRoute from './routes/audit.route';
+import userRoute from './routes/user.route';
+import myRoomRoute from './routes/my-room.route';
+import invoiceRoute from './routes/invoice.route';
+import maintenanceRoute from './routes/maintenance.route';
 
-// Load environment variables
 dotenv.config({ path: '../.env' });
 
 import { initCronJobs } from './jobs/cron';
-
 initCronJobs();
 
 const app: Express = express();
 const port = process.env.PORT || 5000;
 
-// Middlewares
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
-}));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
 app.use('/api/health', healthRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/rooms', roomRoute);
@@ -39,8 +36,11 @@ app.use('/api/dashboard', dashboardRoute);
 app.use('/api/notifications', notificationRoute);
 app.use('/api/reports', reportRoute);
 app.use('/api/audit-logs', auditRoute);
+app.use('/api/users', userRoute);
+app.use('/api/my-room', myRoomRoute);
+app.use('/api/invoices', invoiceRoute);
+app.use('/api/maintenance', maintenanceRoute);
 
-// Start server
 app.listen(port, () => {
   console.log(`[Server]: Backend is running at http://localhost:${port}`);
 });
