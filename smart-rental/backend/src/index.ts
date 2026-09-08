@@ -40,7 +40,13 @@ app.use('/api/users', userRoute);
 app.use('/api/my-room', myRoomRoute);
 app.use('/api/invoices', invoiceRoute);
 app.use('/api/maintenance', maintenanceRoute);
-
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Smart Rental API is running',
+    healthCheck: '/api/health'
+  });
+});
 app.listen(port, () => {
   console.log(`[Server]: Backend is running at http://localhost:${port}`);
 });
