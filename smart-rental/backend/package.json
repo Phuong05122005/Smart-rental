@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon --exec \"ts-node --transpile-only\" src/index.ts",
-    "build": "tsc || echo done"
+    "build": "npx prisma generate --schema=../database/schema.prisma && tsc || echo done"
   },
   "keywords": [],
   "author": "",
