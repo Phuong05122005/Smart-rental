@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  LANDLORD
+  STAFF
+  TENANT
+}
+
+enum UserStatus {
+  ACTIVE
+  LOCKED
+}
+
+enum RoomStatus {
+  AVAILABLE
+  RENTED
+  MAINTENANCE
+}
+
+enum ContractStatus {
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  UNPAID
+  OVERDUE
+  CANCELLED
+}
+
+enum RequestStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+model User {
+  id            String          @id @default(uuid())
+  username      String          @unique
+  email         String?         @unique
+  password_hash String
+  full_name     String?
+  role          Role            @default(TENANT)
+  status        UserStatus      @default(ACTIVE)
+  phone         String?
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+  tenants       Tenant[]
+  notifications Notification[]
+  audit_logs    AuditLog[]      @relation("UserAuditLogs")
+
+  @@map("users")
+}
+
+model Tenant {
+  id                   String               @id @default(uuid())
+  user_id              String?              @unique
+  user                 User?                @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  full_name            String
+  email                String?
+  phone                String
+  identity_card        String?
+  identity_number      String?
+  contracts            Contract[]
+  maintenance_requests MaintenanceRequest[]
+  created_at           DateTime             @default(now())
+  updated_at           DateTime             @updatedAt
+
+  @@map("tenants")
+}
+
+model Room {
+  id                   String               @id @default(uuid())
+  room_number          String               @unique
+  room_type            String?
+  price                Decimal              @db.Decimal(10, 2)
+  area                 Float?
+  status               RoomStatus           @default(AVAILABLE)
+  description          String?
+  contracts            Contract[]
+  maintenance_requests MaintenanceRequest[]
+  created_at           DateTime             @default(now())
+  updated_at           DateTime             @updatedAt
+
+  @@map("rooms")
+}
+
+model Contract {
+  id          String         @id @default(uuid())
+  room_id     String
+  room        Room           @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  tenant_id   String
+  tenant      Tenant         @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  start_date  DateTime
+  end_date    DateTime
+  rent_price  Decimal        @db.Decimal(10, 2)
+  deposit     Decimal        @db.Decimal(10, 2)
+  status      ContractStatus @default(ACTIVE)
+  invoices    Invoice[]
+  created_at  DateTime       @default(now())
+  updated_at  DateTime       @updatedAt
+
+  @@map("contracts")
+}
+
+model Invoice {
+  id          String        @id @default(uuid())
+  contract_id String
+  contract    Contract      @relation(fields: [contract_id], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  amount      Decimal       @db.Decimal(10, 2)
+  status      InvoiceStatus @default(PENDING)
+  issue_date  DateTime      @default(now())
+  due_date    DateTime
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+
+  @@map("invoices")
+}
+
+model MaintenanceRequest {
+  id          String        @id @default(uuid())
+  room_id     String
+  room        Room          @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  tenant_id   String
+  tenant      Tenant        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  status      RequestStatus @default(PENDING)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+
+  @@map("maintenance_requests")
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  title      String?
+  content    String
+  type       String?
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actor_id    String?
+  actor       User?    @relation("UserAuditLogs", fields: [actor_id], references: [id], onDelete: SetNull)
+  action      String
+  entity      String?
+  target_type String?
+  target_id   String?
+  entity_id   String?
+  details     String?
+  old_value   String?
+  new_value   String?
+  ip_address  String?
+  created_at  DateTime @default(now())
+
+  @@map("audit_logs")
+}
