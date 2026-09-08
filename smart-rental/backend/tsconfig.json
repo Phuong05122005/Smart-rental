@@ -8,6 +8,8 @@
     "forceConsistentCasingInFileNames": true,
     "strict": false,
     "skipLibCheck": true,
-    "skipLibCheck": true
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noEmitOnError": false
   }
 }
