@@ -14,6 +14,7 @@ import { getContracts, createContract, updateContract, type Contract } from '../
 import { getRooms, type Room } from '../services/roomService';
 import { getTenants, type Tenant } from '../services/tenantService';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
 
 const Contracts = () => {
   const { user } = useAuth();
@@ -91,6 +92,17 @@ const Contracts = () => {
     loadFormDependencies();
     setIsFormOpen(true);
   };
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.openCreateModal) {
+      openForm();
+      // Clean up state so it doesn't reopen on reload
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
+
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
