@@ -269,6 +269,11 @@ const Rooms = () => {
             <div>
               <label className="text-sm font-medium text-slate-700">Giá phòng (VNĐ) *</label>
               <Input type="number" required min="1" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+              {formData.price && (
+                <p className="text-sm text-green-600 mt-1 font-medium">
+                  Hiển thị: {Number(formData.price).toLocaleString('vi-VN')} đ
+                </p>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Diện tích (m2) *</label>

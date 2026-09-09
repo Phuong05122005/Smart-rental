@@ -278,10 +278,20 @@ const Contracts = () => {
             <div>
               <label className="text-sm font-medium text-slate-700">Giá thuê (VNĐ) *</label>
               <Input required type="number" min="1" value={formData.rent_price} onChange={e => setFormData({...formData, rent_price: e.target.value})} />
+              {formData.rent_price && (
+                <p className="text-sm text-green-600 mt-1 font-medium">
+                  Hiển thị: {Number(formData.rent_price).toLocaleString('vi-VN')} đ
+                </p>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Tiền cọc (VNĐ) *</label>
               <Input required type="number" min="0" value={formData.deposit} onChange={e => setFormData({...formData, deposit: e.target.value})} />
+              {formData.deposit && (
+                <p className="text-sm text-green-600 mt-1 font-medium">
+                  Hiển thị: {Number(formData.deposit).toLocaleString('vi-VN')} đ
+                </p>
+              )}
             </div>
           </div>
           <Button type="submit" className="w-full">Tạo Hợp Đồng</Button>
