@@ -169,8 +169,25 @@ const AdminInvoices = () => {
                       )}
                     </TableCell>
                     <TableCell className="py-4 pr-6 text-right">
-                      <div className="flex justify-end gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
-                        {/* Nút bật mã QR thanh toán */}
+                       <div className="flex justify-end gap-1.5">
+                        <Button
+                          variant="outline"
+                        className="h-8 px-2.5 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-1"
+                        onClick={() => handleOpenQrModal(inv)}
+                        >
+                        <QrCode className="w-3.5 h-3.5" /> Mã QR
+                        </Button>
+                        {inv.status !== 'PAID' && (
+                          <Button
+                            variant="outline"
+                            className="h-8 px-2.5 text-xs border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-colors"
+                            onClick={() => handleUpdateStatus(inv.id, 'PAID')}
+                          >
+                            Xác nhận thu
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
                         <Button
                           variant="outline"
                           className="h-8 px-2.5 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-1"
