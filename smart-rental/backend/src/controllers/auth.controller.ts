@@ -56,7 +56,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         username: user.username,
         full_name: user.full_name,
-        role: user.role
+        role: user.role,
+        bank_name: (user as any).bank_name || null,
+        bank_account: (user as any).bank_account || null,
+        bank_owner: (user as any).bank_owner || null
       }
     });
   } catch (error) {
@@ -76,10 +79,14 @@ export const getMe = async (req: any, res: Response): Promise<void> => {
       select: {
         id: true,
         username: true,
+        email: true,
         full_name: true,
         role: true,
         status: true,
-        created_at: true
+        phone: true,
+        bank_name: true,
+        bank_account: true,
+        bank_owner: true
       }
     });
 
@@ -138,24 +145,35 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
 export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const user = req.user;
-    const { full_name } = req.body;
-    
     if (!user) {
-      res.status(401).json({ message: 'Chưa đăng nhập' });
+      res.status(401).json({ message: 'Unauthorized' });
       return;
     }
 
-    if (!full_name) {
-      res.status(400).json({ message: 'Vui lòng nhập họ tên.' });
-      return;
-    }
+    const { full_name, bank_name, bank_account, bank_owner } = req.body;
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: user.id },
-      data: { full_name }
+      data: { 
+        full_name,
+        bank_name: bank_name || null,
+        bank_account: bank_account || null,
+        bank_owner: bank_owner || null
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        full_name: true,
+        role: true,
+        status: true,
+        phone: true,
+        bank_name: true,
+        bank_account: true,
+        bank_owner: true
+      }
     });
 
-    // If it's a TENANT, also update the Tenant record so they are synced
     if (user.role === 'TENANT') {
       await prisma.tenant.updateMany({
         where: { user_id: user.id },
@@ -163,9 +181,9 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
       });
     }
 
-    res.json({ message: 'Cập nhật thông tin thành công!' });
+    res.json({ message: 'Cập nhật thông tin thành công!', data: updatedUser });
   } catch (error) {
     console.error('[updateProfile]', error);
-    res.status(500).json({ message: 'Lỗi server.' });
+    res.status(500).json({ message: 'Lỗi server' });
   }
 };

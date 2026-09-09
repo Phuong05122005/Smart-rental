@@ -10,6 +10,13 @@ export interface Invoice {
   status: 'UNPAID' | 'PAID' | 'OVERDUE';
   description?: string;
   contract?: any;
+  creator?: {
+    id: string;
+    full_name: string | null;
+    bank_name: string | null;
+    bank_account: string | null;
+    bank_owner: string | null;
+  };
 }
 
 export const getInvoices = async (params?: any) => {

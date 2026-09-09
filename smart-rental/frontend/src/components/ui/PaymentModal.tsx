@@ -22,9 +22,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   if (!isOpen) return null;
 
   // Cấu hình thông tin tài khoản nhận tiền
-  const BANK_ID = 'MB'; // Mã ngân hàng (ví dụ: MB, VCB, ICB, ACB, VPB...)
-  const ACCOUNT_NO = '0334812345'; // Thay bằng số tài khoản của bạn
-  const ACCOUNT_NAME = 'NGUYEN THAI PHUONG'; // Tên chủ tài khoản viết hoa không dấu
+  const BANK_ID = (invoice as any).creator?.bank_name || 'MB'; 
+  const ACCOUNT_NO = (invoice as any).creator?.bank_account || '0334812345'; 
+  const ACCOUNT_NAME = (invoice as any).creator?.bank_owner || (invoice as any).creator?.full_name || 'NGUYEN THAI PHUONG'; 
 
   // Cú pháp nội dung chuyển khoản rõ ràng để dễ đối soát
   const shortId = String(invoice.id).split('-')[0].toUpperCase();

@@ -7,6 +7,10 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
     const user = req.user;
     if (!user) return;
 
+    const includeCreator = {
+      select: { id: true, full_name: true, bank_name: true, bank_account: true, bank_owner: true }
+    };
+
     if (user.role === 'TENANT') {
       const tenant = await prisma.tenant.findUnique({ where: { user_id: user.id } });
       if (!tenant) {
@@ -15,7 +19,7 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
       }
       const invoices = await prisma.invoice.findMany({
         where: { contract: { tenant_id: tenant.id } },
-        include: { contract: { include: { room: true, tenant: true } } },
+        include: { contract: { include: { room: true, tenant: true } }, creator: includeCreator },
         orderBy: { issue_date: 'desc' }
       });
       res.json(invoices);
@@ -26,7 +30,7 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
       
       const invoices = await prisma.invoice.findMany({
         where,
-        include: { contract: { include: { room: true, tenant: true } } },
+        include: { contract: { include: { room: true, tenant: true } }, creator: includeCreator },
         orderBy: { issue_date: 'desc' }
       });
       res.json(invoices);
@@ -39,18 +43,34 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
 
 export const createInvoice = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { contract_id, title, amount, due_date, description } = req.body;
-    const invoice: any = await prisma.invoice.create({
-      data: { contract_id, title, amount, due_date: new Date(due_date), description },
+    const { contract_id, title, amount, due_date, description, issue_date, status } = req.body;
+    const invoice = await prisma.invoice.create({
+      data: {
+        contract_id,
+        title,
+        description: description || null,
+        amount,
+        issue_date: issue_date ? new Date(issue_date) : new Date(),
+        due_date: new Date(due_date),
+        status: status || 'UNPAID',
+        creator_id: req.user?.id
+      },
       include: {
         contract: {
-          include: { tenant: true }
+          include: {
+            room: true,
+            tenant: {
+              include: { user: true }
+            }
+          }
+        },
+        creator: {
+          select: { id: true, full_name: true, bank_name: true, bank_account: true, bank_owner: true }
         }
       }
     });
 
-    // Notify the tenant
-    if ((invoice as any).contract?.tenant?.user_id) {
+    if (invoice.contract?.tenant?.user_id) {
       await prisma.notification.create({
         data: {
           user_id: invoice.contract.tenant.user_id,

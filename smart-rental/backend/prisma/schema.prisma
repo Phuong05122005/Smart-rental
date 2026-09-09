@@ -55,11 +55,15 @@ model User {
   role          Role            @default(TENANT)
   status        UserStatus      @default(ACTIVE)
   phone         String?
+  bank_name     String?
+  bank_account  String?
+  bank_owner    String?
   created_at    DateTime        @default(now())
   updated_at    DateTime        @updatedAt
   tenants       Tenant[]
   notifications Notification[]
   audit_logs    AuditLog[]      @relation("UserAuditLogs")
+  created_invoices Invoice[]    @relation("InvoiceCreator")
 
   @@map("users")
 }
@@ -125,6 +129,8 @@ model Invoice {
   status      InvoiceStatus @default(PENDING)
   issue_date  DateTime      @default(now())
   due_date    DateTime
+  creator_id  String?
+  creator     User?         @relation("InvoiceCreator", fields: [creator_id], references: [id], onDelete: SetNull)
   created_at  DateTime      @default(now())
   updated_at  DateTime      @updatedAt
 

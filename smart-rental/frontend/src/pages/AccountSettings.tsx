@@ -38,15 +38,35 @@ const AccountSettings = () => {
     }
   };
 
-  const [profile, setProfile] = useState({ full_name: user?.full_name || '' });
+  const [profile, setProfile] = useState({ 
+    full_name: user?.full_name || '',
+    bank_name: (user as any)?.bank_name || '',
+    bank_account: (user as any)?.bank_account || '',
+    bank_owner: (user as any)?.bank_owner || ''
+  });
   const [profileLoading, setProfileLoading] = useState(false);
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileLoading(true);
     try {
-      await api.post('/auth/update-profile', profile);
-      toast.success('Cập nhật thông tin thành công! Vui lòng đăng nhập lại để thấy thay đổi.');
+      const res = await api.post('/auth/update-profile', profile);
+      const updatedUser = res.data.data;
+      if (updatedUser) {
+        localStorage.setItem('user', JSON.stringify({
+          ...user,
+          full_name: updatedUser.full_name,
+          bank_name: updatedUser.bank_name,
+          bank_account: updatedUser.bank_account,
+          bank_owner: updatedUser.bank_owner
+        }));
+        // Note: The context won't update immediately unless we refresh or expose a `setUser` method.
+        // We prompt the user to reload.
+        toast.success('Cập nhật thông tin thành công! Trang sẽ tải lại để áp dụng thay đổi.', { duration: 3000 });
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
+        toast.success('Cập nhật thông tin thành công!');
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Cập nhật thất bại.');
     } finally {
@@ -85,6 +105,37 @@ const AccountSettings = () => {
                     className="border-slate-200 focus:border-blue-500 shadow-sm"
                   />
                 </div>
+                {user?.role !== 'TENANT' && (
+                  <div className="pt-4 border-t border-slate-100">
+                    <h4 className="font-semibold text-slate-800 mb-4">Thông tin nhận thanh toán (Dành cho Mã QR)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-slate-700 block mb-1.5">Tên Ngân Hàng (VD: MB, VCB)</label>
+                        <Input 
+                          value={profile.bank_name} 
+                          onChange={e => setProfile({...profile, bank_name: e.target.value})} 
+                          placeholder="MB"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700 block mb-1.5">Số tài khoản</label>
+                        <Input 
+                          value={profile.bank_account} 
+                          onChange={e => setProfile({...profile, bank_account: e.target.value})} 
+                          placeholder="0334812345"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="text-sm font-medium text-slate-700 block mb-1.5">Tên chủ tài khoản (Không dấu)</label>
+                        <Input 
+                          value={profile.bank_owner} 
+                          onChange={e => setProfile({...profile, bank_owner: e.target.value.toUpperCase()})} 
+                          placeholder="NGUYEN THAI PHUONG"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="text-sm font-medium text-slate-700 block mb-1.5">Vai trò hệ thống</label>
                   <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg">

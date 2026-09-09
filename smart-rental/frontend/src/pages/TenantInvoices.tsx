@@ -40,9 +40,9 @@ const TenantInvoices = () => {
   };
 
   const getVietQRUrl = (inv: Invoice, shortId: string) => {
-    const bankId = 'MB'; // MBBank
-    const accountNo = '1010105122005';
-    const accountName = 'NGUYEN THAI PHUONG';
+    const bankId = inv.creator?.bank_name || 'MB';
+    const accountNo = inv.creator?.bank_account || '1010105122005';
+    const accountName = inv.creator?.bank_owner || inv.creator?.full_name || 'NGUYEN THAI PHUONG';
     const amount = Number(inv.amount);
     const addInfo = encodeURIComponent(`HD ${shortId}`);
     return `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${addInfo}&accountName=${encodeURIComponent(accountName)}`;
@@ -201,18 +201,18 @@ const TenantInvoices = () => {
             <div className="text-left bg-slate-50 p-5 rounded-xl text-sm space-y-3 border border-slate-200 shadow-inner">
               <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                 <span className="text-slate-500">Ngân hàng thụ hưởng:</span> 
-                <span className="font-semibold text-slate-800">MB Bank</span>
+                <span className="font-semibold text-slate-800">{payingInvoice.creator?.bank_name || 'MB'}</span>
               </div>
               <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                 <span className="text-slate-500">Số tài khoản:</span> 
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-slate-800 text-base">1010105122005</span>
-                  <button onClick={() => copyToClipboard('1010105122005', 'Số tài khoản')} className="text-slate-400 hover:text-blue-600"><Copy size={14}/></button>
+                  <span className="font-mono font-bold text-slate-800 text-base">{payingInvoice.creator?.bank_account || '1010105122005'}</span>
+                  <button onClick={() => copyToClipboard(payingInvoice.creator?.bank_account || '1010105122005', 'Số tài khoản')} className="text-slate-400 hover:text-blue-600"><Copy size={14}/></button>
                 </div>
               </div>
               <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                 <span className="text-slate-500">Chủ tài khoản:</span> 
-                <span className="font-semibold text-slate-800">NGUYEN THAI PHUONG</span>
+                <span className="font-semibold text-slate-800 uppercase">{payingInvoice.creator?.bank_owner || payingInvoice.creator?.full_name || 'NGUYEN THAI PHUONG'}</span>
               </div>
               <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                 <span className="text-slate-500">Số tiền chuyển:</span> 

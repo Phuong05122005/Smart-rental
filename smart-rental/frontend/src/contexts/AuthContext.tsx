@@ -6,6 +6,9 @@ export interface User {
   username: string;
   full_name: string;
   role: 'ADMIN' | 'LANDLORD' | 'STAFF' | 'TENANT';
+  bank_name?: string;
+  bank_account?: string;
+  bank_owner?: string;
 }
 
 interface AuthContextType {
