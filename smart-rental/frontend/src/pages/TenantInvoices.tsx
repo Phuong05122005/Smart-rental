@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { Modal } from '../components/ui/Modal';
+import { PaymentModal } from '../components/ui/PaymentModal';
 import { getInvoices, type Invoice } from '../services/invoiceService';
 import { ErrorState } from '../components/ui/ErrorState';
 import { QrCode, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -181,72 +181,19 @@ const TenantInvoices = () => {
       </div>
 
       {/* Modal hiển thị mã quét QR thanh toán */}
-      <Modal isOpen={!!payingInvoice} onClose={() => setPayingInvoice(null)} title="Thanh toán Hóa đơn">
-        {payingInvoice && (
-          <div className="space-y-5 text-center px-2">
-            <p className="text-slate-600 text-sm">
-              Sử dụng ứng dụng ngân hàng hoặc ví điện tử quét mã dưới đây để thanh toán nhanh.
-            </p>
-            
-            <div className="flex justify-center">
-              <div className="p-4 bg-white rounded-2xl border-2 border-blue-100 shadow-sm inline-block">
-                <img 
-                  src={getVietQRUrl(payingInvoice, payingInvoice.id.split('-')[0].toUpperCase())} 
-                  alt="QR Code VietQR" 
-                  className="max-w-[220px] rounded-lg" 
-                />
-              </div>
-            </div>
-
-            <div className="text-left bg-slate-50 p-5 rounded-xl text-sm space-y-3 border border-slate-200 shadow-inner">
-              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                <span className="text-slate-500">Ngân hàng thụ hưởng:</span> 
-                <span className="font-semibold text-slate-800">{payingInvoice.creator?.bank_name || 'MB'}</span>
-              </div>
-              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                <span className="text-slate-500">Số tài khoản:</span> 
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-slate-800 text-base">{payingInvoice.creator?.bank_account || '1010105122005'}</span>
-                  <button onClick={() => copyToClipboard(payingInvoice.creator?.bank_account || '1010105122005', 'Số tài khoản')} className="text-slate-400 hover:text-blue-600"><Copy size={14}/></button>
-                </div>
-              </div>
-              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                <span className="text-slate-500">Chủ tài khoản:</span> 
-                <span className="font-semibold text-slate-800 uppercase">{payingInvoice.creator?.bank_owner || payingInvoice.creator?.full_name || 'NGUYEN THAI PHUONG'}</span>
-              </div>
-              <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                <span className="text-slate-500">Số tiền chuyển:</span> 
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-rose-600 text-lg">
-                    {Number(payingInvoice.amount).toLocaleString('vi-VN')} đ
-                  </span>
-                  <button onClick={() => copyToClipboard(payingInvoice.amount.toString(), 'Số tiền')} className="text-slate-400 hover:text-blue-600"><Copy size={14}/></button>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-1 gap-2">
-                <span className="text-slate-500">Nội dung chuyển khoản:</span> 
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-md border border-blue-100">
-                    HD {payingInvoice.id.split('-')[0].toUpperCase()}
-                  </span>
-                  <button onClick={() => copyToClipboard(`HD ${payingInvoice.id.split('-')[0].toUpperCase()}`, 'Nội dung CK')} className="text-slate-400 hover:text-blue-600"><Copy size={14}/></button>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-400 italic mt-4">
-              * Lưu ý: Ghi đúng nội dung chuyển khoản để hệ thống tự động gạch nợ.
-            </p>
-
-            <button 
-              className="w-full py-3 mt-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium transition-all shadow-sm" 
-              onClick={() => setPayingInvoice(null)}
-            >
-              Đóng cửa sổ
-            </button>
-          </div>
-        )}
-      </Modal>
+      {payingInvoice && (
+        <PaymentModal
+          isOpen={!!payingInvoice}
+          onClose={() => setPayingInvoice(null)}
+          invoice={{
+            id: payingInvoice.id,
+            room_name: payingInvoice.contract?.room?.room_number,
+            total_amount: Number(payingInvoice.amount),
+            status: payingInvoice.status,
+            creator: payingInvoice.creator
+          } as any}
+        />
+      )}
     </div>
   );
 };
