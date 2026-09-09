@@ -73,7 +73,16 @@ const Contracts = () => {
     fetchContracts();
   };
 
-  const loadFormDependencies = async () => {
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.openCreateModal) {
+      openForm(location.state?.autoFillFrom);
+      // Clean up state so it doesn't reopen on reload
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
+  const loadFormDependencies = async (autoFillFrom?: string) => {
     try {
       // Get all tenants and AVAILABLE rooms
       const [rRes, tRes] = await Promise.all([
@@ -82,25 +91,44 @@ const Contracts = () => {
       ]);
       setRoomsList(rRes.data);
       setTenantsList(tRes.data);
+
+      if (autoFillFrom) {
+        const match = autoFillFrom.match(/Khách thuê (.*?) vừa gửi yêu cầu muốn thuê phòng (.*?)\./);
+        if (match) {
+          const tenantName = match[1];
+          const roomNumber = match[2];
+          const matchedTenant = tRes.data.find((t: any) => t.full_name === tenantName || t.username === tenantName);
+          const matchedRoom = rRes.data.find((r: any) => String(r.room_number) === String(roomNumber));
+          
+          if (matchedTenant || matchedRoom) {
+            const today = new Date();
+            const nextYear = new Date();
+            nextYear.setFullYear(today.getFullYear() + 1);
+            
+            setFormData(prev => ({
+              ...prev,
+              tenant_id: matchedTenant ? matchedTenant.id : prev.tenant_id,
+              room_id: matchedRoom ? matchedRoom.id : prev.room_id,
+              rent_price: matchedRoom ? String(matchedRoom.price) : prev.rent_price,
+              start_date: today.toISOString().split('T')[0],
+              end_date: nextYear.toISOString().split('T')[0]
+            }));
+            toast.success('Đã tự động điền thông tin từ yêu cầu thuê phòng!');
+          }
+        }
+      }
     } catch (err) {
       toast.error('Không tải được danh sách phòng/khách thuê');
     }
   };
 
-  const openForm = () => {
+  const openForm = (autoFillFrom?: string) => {
     setFormData({ tenant_id: '', room_id: '', start_date: '', end_date: '', rent_price: '', deposit: '0' });
-    loadFormDependencies();
+    loadFormDependencies(autoFillFrom);
     setIsFormOpen(true);
   };
 
-  const location = useLocation();
-  useEffect(() => {
-    if (location.state?.openCreateModal) {
-      openForm();
-      // Clean up state so it doesn't reopen on reload
-      window.history.replaceState({}, document.title);
-    }
-  }, [location]);
+
 
 
 
