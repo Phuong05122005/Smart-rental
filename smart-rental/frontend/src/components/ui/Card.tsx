@@ -15,3 +15,7 @@ export const CardTitle = ({ children, className = '' }: { children: React.ReactN
 export const CardContent = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
   <div className={`p-6 ${className}`}>{children}</div>
 );
+
+export const CardFooter = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
+  <div className={`p-6 border-t border-slate-100 ${className}`}>{children}</div>
+);

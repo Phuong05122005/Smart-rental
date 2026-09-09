@@ -60,7 +60,7 @@ export const getTenants = async (req: Request, res: Response): Promise<void> => 
 export const getTenant = async (req: Request, res: Response): Promise<void> => {
   try {
     const tenant = await prisma.tenant.findUnique({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       include: {
         contracts: {
           include: { room: true }
@@ -126,7 +126,7 @@ export const updateTenant = async (req: Request, res: Response): Promise<void> =
     }
 
     const tenant = await prisma.tenant.update({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       data: {
         full_name,
         identity_number,
@@ -146,7 +146,7 @@ export const updateTenant = async (req: Request, res: Response): Promise<void> =
 
 export const deleteTenant = async (req: Request, res: Response): Promise<void> => {
   try {
-    const id = req.params.id;
+    const id = (req.params.id as string);
 
     // Check for active contracts
     const activeContracts = await prisma.contract.count({
@@ -162,7 +162,7 @@ export const deleteTenant = async (req: Request, res: Response): Promise<void> =
     }
 
     await prisma.tenant.delete({
-      where: { id }
+      where: { id: id as string }
     });
 
     res.json({ message: 'Xóa khách thuê thành công' });

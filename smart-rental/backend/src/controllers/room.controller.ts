@@ -61,7 +61,7 @@ export const getRooms = async (req: Request, res: Response): Promise<void> => {
 export const getRoom = async (req: Request, res: Response): Promise<void> => {
   try {
     const room = await prisma.room.findUnique({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       include: {
         contracts: {
           include: { tenant: true }
@@ -129,7 +129,7 @@ export const updateRoom = async (req: Request, res: Response): Promise<void> => 
     }
 
     const room = await prisma.room.update({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       data: {
         room_number,
         room_type,
@@ -151,7 +151,7 @@ export const updateRoom = async (req: Request, res: Response): Promise<void> => 
 
 export const deleteRoom = async (req: Request, res: Response): Promise<void> => {
   try {
-    const id = req.params.id;
+    const id = (req.params.id as string);
 
     // Check for active contracts
     const activeContracts = await prisma.contract.count({
@@ -167,7 +167,7 @@ export const deleteRoom = async (req: Request, res: Response): Promise<void> => 
     }
 
     await prisma.room.delete({
-      where: { id }
+      where: { id: id as string }
     });
 
     res.json({ message: 'Xóa phòng thành công' });

@@ -4,7 +4,7 @@ import prisma from '../utils/prisma';
 
 export const createAccount = async (req: Request, res: Response): Promise<void> => {
   try {
-    const tenantId = req.params.id;
+    const tenantId = (req.params.id as string);
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) {
       res.status(404).json({ message: 'Không tìm thấy khách thuê' });

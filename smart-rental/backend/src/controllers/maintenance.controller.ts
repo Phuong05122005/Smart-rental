@@ -56,7 +56,7 @@ export const createRequest = async (req: AuthRequest, res: Response): Promise<vo
     const room_id = room.id;
     const { title, description } = req.body;
 
-    const request = await prisma.maintenanceRequest.create({
+    const request: any = await prisma.maintenanceRequest.create({
       data: { tenant_id: tenant.id, room_id, title, description }
     });
 
@@ -85,10 +85,10 @@ export const createRequest = async (req: AuthRequest, res: Response): Promise<vo
 
 export const updateRequestStatus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = (req.params.id as string) as string;
     const { status } = req.body;
-    const request = await prisma.maintenanceRequest.update({
-      where: { id },
+    const request: any = await prisma.maintenanceRequest.update({
+      where: { id: id as string },
       data: { status },
       include: { tenant: true }
     });
@@ -98,7 +98,7 @@ export const updateRequestStatus = async (req: AuthRequest, res: Response): Prom
     if (status === 'RESOLVED') statusText = 'Đã hoàn tất';
     if (status === 'REJECTED') statusText = 'Đã bị từ chối';
 
-    if (request.tenant?.user_id) {
+    if ((request as any).tenant?.user_id) {
       await prisma.notification.create({
         data: {
           user_id: request.tenant.user_id,

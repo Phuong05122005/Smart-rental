@@ -18,7 +18,7 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
 export const markAsRead = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     await prisma.notification.updateMany({
-      where: { id: req.params.id, user_id: req.user?.id },
+      where: { id: (req.params.id as string), user_id: req.user?.id },
       data: { is_read: true }
     });
     res.json({ message: 'Đã đọc' });

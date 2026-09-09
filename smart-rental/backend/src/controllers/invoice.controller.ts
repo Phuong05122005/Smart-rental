@@ -40,7 +40,7 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
 export const createInvoice = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { contract_id, title, amount, due_date, description } = req.body;
-    const invoice = await prisma.invoice.create({
+    const invoice: any = await prisma.invoice.create({
       data: { contract_id, title, amount, due_date: new Date(due_date), description },
       include: {
         contract: {
@@ -50,7 +50,7 @@ export const createInvoice = async (req: AuthRequest, res: Response): Promise<vo
     });
 
     // Notify the tenant
-    if (invoice.contract?.tenant?.user_id) {
+    if ((invoice as any).contract?.tenant?.user_id) {
       await prisma.notification.create({
         data: {
           user_id: invoice.contract.tenant.user_id,
@@ -70,10 +70,10 @@ export const createInvoice = async (req: AuthRequest, res: Response): Promise<vo
 
 export const updateInvoiceStatus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = (req.params.id as string) as string;
     const { status } = req.body;
-    const invoice = await prisma.invoice.update({
-      where: { id },
+    const invoice: any = await prisma.invoice.update({
+      where: { id: id as string },
       data: { status },
       include: {
         contract: {
@@ -83,7 +83,7 @@ export const updateInvoiceStatus = async (req: AuthRequest, res: Response): Prom
     });
 
     // Notify the tenant if paid
-    if (status === 'PAID' && invoice.contract?.tenant?.user_id) {
+    if (status === 'PAID' && (invoice as any).contract?.tenant?.user_id) {
       await prisma.notification.create({
         data: {
           user_id: invoice.contract.tenant.user_id,

@@ -100,7 +100,7 @@ export const getContracts = async (req: Request, res: Response): Promise<void> =
 export const getContract = async (req: Request, res: Response): Promise<void> => {
   try {
     const contract = await prisma.contract.findUnique({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       include: {
         tenant: true,
         room: true
@@ -190,7 +190,7 @@ export const createContract = async (req: Request, res: Response): Promise<void>
 export const updateContract = async (req: Request, res: Response): Promise<void> => {
   try {
     const { status } = req.body;
-    const contractId = req.params.id;
+    const contractId = (req.params.id as string);
     
     await prisma.$transaction(async (tx: any) => {
       const contract = await tx.contract.findUnique({ where: { id: contractId } });

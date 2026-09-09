@@ -65,14 +65,14 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
 
 export const toggleUserStatus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = (req.params.id as string) as string;
     
     if (id === req.user?.id) {
       res.status(400).json({ message: 'Không thể tự khóa tài khoản của chính mình.' });
       return;
     }
 
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({ where: { id: id as string } });
     if (!user) {
       res.status(404).json({ message: 'Không tìm thấy tài khoản.' });
       return;
@@ -81,7 +81,7 @@ export const toggleUserStatus = async (req: AuthRequest, res: Response): Promise
     const newStatus = user.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
     
     await prisma.user.update({
-      where: { id },
+      where: { id: id as string },
       data: { status: newStatus }
     });
 
@@ -94,21 +94,21 @@ export const toggleUserStatus = async (req: AuthRequest, res: Response): Promise
 
 export const deleteUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = (req.params.id as string) as string;
 
     if (id === req.user?.id) {
       res.status(400).json({ message: 'Không thể tự xóa tài khoản của chính mình.' });
       return;
     }
 
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({ where: { id: id as string } });
     if (!user) {
       res.status(404).json({ message: 'Không tìm thấy tài khoản.' });
       return;
     }
 
     // Delete user
-    await prisma.user.delete({ where: { id } });
+    await prisma.user.delete({ where: { id: id as string } });
 
     res.json({ message: 'Đã xóa tài khoản thành công.' });
   } catch (error) {
