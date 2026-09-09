@@ -15,7 +15,7 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
       }
       const invoices = await prisma.invoice.findMany({
         where: { contract: { tenant_id: tenant.id } },
-        include: { contract: { include: { room: true } } },
+        include: { contract: { include: { room: true, tenant: true } } },
         orderBy: { issue_date: 'desc' }
       });
       res.json(invoices);

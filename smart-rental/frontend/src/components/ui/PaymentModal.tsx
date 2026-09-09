@@ -27,7 +27,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const ACCOUNT_NAME = 'NGUYEN THAI PHUONG'; // Tên chủ tài khoản viết hoa không dấu
 
   // Cú pháp nội dung chuyển khoản rõ ràng để dễ đối soát
-  const memo = `THANHTOAN HD${invoice.id}`;
+  const shortId = String(invoice.id).split('-')[0].toUpperCase();
+  const memo = `THANHTOAN HD ${shortId}`;
 
   // URL sinh mã QR trực tiếp từ VietQR
   const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${invoice.total_amount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
@@ -44,7 +45,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         </button>
 
         <h3 className="text-xl font-bold text-gray-900 text-center mb-1">
-          Thanh Toán Hóa Đơn #{invoice.id}
+          Thanh Toán Hóa Đơn #{shortId}
         </h3>
         <p className="text-sm text-gray-500 text-center mb-4">
           Phòng: {invoice.room_name || 'Phòng trọ'}
