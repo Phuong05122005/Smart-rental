@@ -39,6 +39,34 @@ export const Header = ({ toggleMobileSidebar }: { toggleMobileSidebar: () => voi
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleNotificationClick = async (notif: any) => {
+    setIsNotificationOpen(false);
+    
+    // Đánh dấu đã đọc ngầm
+    if (!notif.is_read) {
+      import('../services/notificationService').then(m => {
+        m.markAsRead(notif.id).then(() => {
+          window.dispatchEvent(new Event('notificationsUpdated'));
+        });
+      });
+    }
+
+    const isTenant = user?.role === 'TENANT';
+    const type = notif.type || '';
+
+    if (type === 'RENT_REQUEST' || notif.title?.includes('Yêu cầu thuê phòng')) {
+      navigate('/contracts', { state: { openCreateModal: true } });
+    } else if (type.startsWith('INVOICE') || type.startsWith('OVERDUE_')) {
+      navigate(isTenant ? '/my-invoices' : '/invoices');
+    } else if (type.startsWith('SYSTEM')) {
+      navigate(isTenant ? '/my-maintenance' : '/maintenance');
+    } else if (type.startsWith('CONTRACT') || type.startsWith('EXPIRING_')) {
+      navigate(isTenant ? '/my-room' : '/contracts');
+    } else {
+      navigate('/notifications');
+    }
+  };
+
   const pathMap: Record<string, string> = {
     '/dashboard': 'Tổng quan',
     '/rooms': 'Quản lý phòng',
@@ -92,7 +120,11 @@ export const Header = ({ toggleMobileSidebar }: { toggleMobileSidebar: () => voi
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {notifications.length > 0 ? notifications.map(notif => (
-                  <div key={notif.id} className={`p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer ${!notif.is_read ? 'bg-blue-50/10' : ''}`}>
+                  <div 
+                    key={notif.id} 
+                    onClick={() => handleNotificationClick(notif)}
+                    className={`p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer ${!notif.is_read ? 'bg-blue-50/10' : ''}`}
+                  >
                     <p className={`text-sm ${!notif.is_read ? 'font-semibold' : 'font-medium'} text-slate-800`}>{notif.title}</p>
                     <p className="text-xs text-slate-500 mt-1 line-clamp-2">{notif.content}</p>
                   </div>
