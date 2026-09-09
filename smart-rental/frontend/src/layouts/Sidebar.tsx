@@ -9,6 +9,7 @@ export const Sidebar = ({ isOpen, toggleSidebar }: { isOpen: boolean, toggleSide
 
   const menuItems = [
     { name: 'Phòng của tôi', path: '/my-room', icon: DoorOpen, roles: ['TENANT'] },
+    { name: 'Danh sách phòng', path: '/available-rooms', icon: DoorOpen, roles: ['TENANT'] },
     { name: 'Hóa đơn của tôi', path: '/my-invoices', icon: FileText, roles: ['TENANT'] },
     { name: 'Báo cáo sự cố', path: '/my-maintenance', icon: Wrench, roles: ['TENANT'] },
     { name: 'Tổng quan', path: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'LANDLORD'] },

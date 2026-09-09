@@ -175,3 +175,41 @@ export const deleteRoom = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ message: 'Lỗi server' });
   }
 };
+
+export const requestRent = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const roomId = req.params.id as string;
+    const user = req.user;
+    if (!user) return;
+
+    const room = await prisma.room.findUnique({ where: { id: roomId } });
+    if (!room || room.status !== 'AVAILABLE') {
+      res.status(400).json({ message: 'Phòng không tồn tại hoặc không còn trống.' });
+      return;
+    }
+
+    const tenant = await prisma.tenant.findUnique({ where: { user_id: user.id } });
+    const tenantName = tenant ? tenant.full_name : user.username;
+
+    // Lấy danh sách admin và landlord
+    const admins = await prisma.user.findMany({
+      where: { role: { in: ['ADMIN', 'LANDLORD'] } }
+    });
+
+    // Tạo thông báo cho các admin
+    for (const admin of admins) {
+      await prisma.notification.create({
+        data: {
+          user_id: admin.id,
+          title: 'Yêu cầu thuê phòng mới',
+          content: `Khách thuê ${tenantName} vừa gửi yêu cầu muốn thuê phòng ${room.room_number}.`,
+          type: 'SYSTEM'
+        }
+      });
+    }
+
+    res.json({ message: 'Đã gửi yêu cầu thuê phòng thành công. Quản lý sẽ liên hệ với bạn sớm nhất.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi gửi yêu cầu' });
+  }
+};

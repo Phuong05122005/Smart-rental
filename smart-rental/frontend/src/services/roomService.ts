@@ -35,3 +35,8 @@ export const deleteRoom = async (id: string) => {
   const response = await api.delete(`/rooms/${id}`);
   return response.data;
 };
+
+export const requestRentRoom = async (id: string) => {
+  const response = await api.post(`/rooms/${id}/rent-request`);
+  return response.data;
+};

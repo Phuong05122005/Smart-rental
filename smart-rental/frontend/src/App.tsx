@@ -20,6 +20,7 @@ import AuditLogs from './pages/AuditLogs';
 import Users from './pages/Users';
 import Forbidden from './pages/Forbidden';
 import AccountSettings from './pages/AccountSettings';
+import AvailableRooms from './pages/AvailableRooms';
 
 const AppRoutes = () => {
   return (
@@ -51,6 +52,11 @@ const AppRoutes = () => {
         <Route path="my-maintenance" element={
           <RoleRoute allowedRoles={['TENANT']}>
             <TenantMaintenance />
+          </RoleRoute>
+        } />
+        <Route path="available-rooms" element={
+          <RoleRoute allowedRoles={['TENANT']}>
+            <AvailableRooms />
           </RoleRoute>
         } />
         
