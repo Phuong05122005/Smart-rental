@@ -5,7 +5,8 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
-import { Plus, Download } from 'lucide-react';
+import { PaymentModal } from '../components/ui/PaymentModal';
+import { Plus, Download, QrCode } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getInvoices, createInvoice, updateInvoiceStatus, type Invoice } from '../services/invoiceService';
 import api from '../services/api';
@@ -16,7 +17,11 @@ const AdminInvoices = () => {
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [contracts, setContracts] = useState<any[]>([]);
-  
+
+  // State quản lý Modal VietQR
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [isQrOpen, setIsQrOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     contract_id: '',
     title: '',
@@ -63,6 +68,16 @@ const AdminInvoices = () => {
     }
   };
 
+  const handleOpenQrModal = (inv: Invoice) => {
+    setSelectedInvoice({
+      id: inv.id,
+      room_name: inv.contract?.room?.room_number ? `Phòng ${inv.contract.room.room_number}` : 'Phòng trọ',
+      total_amount: Number(inv.amount),
+      status: inv.status
+    });
+    setIsQrOpen(true);
+  };
+
   const exportToExcel = () => {
     const data = invoices.map(inv => ({
       'Mã HĐ': inv.id,
@@ -84,8 +99,12 @@ const AdminInvoices = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-xl font-bold text-slate-800">Quản lý Hóa đơn</h2>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={exportToExcel}><Download className="w-4 h-4" /> Xuất Excel</Button>
-          <Button className="gap-2" onClick={() => setIsFormOpen(true)}><Plus className="w-4 h-4" /> Tạo hóa đơn</Button>
+          <Button variant="outline" className="gap-2" onClick={exportToExcel}>
+            <Download className="w-4 h-4" /> Xuất Excel
+          </Button>
+          <Button className="gap-2" onClick={() => setIsFormOpen(true)}>
+            <Plus className="w-4 h-4" /> Tạo hóa đơn
+          </Button>
         </div>
       </div>
 
@@ -121,7 +140,9 @@ const AdminInvoices = () => {
               <tbody className="divide-y divide-slate-100">
                 {invoices.map(inv => (
                   <TableRow key={inv.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <TableCell className="pl-6 py-4 text-xs font-mono text-slate-400 font-medium">#{inv.id.split('-')[0].toUpperCase()}</TableCell>
+                    <TableCell className="pl-6 py-4 text-xs font-mono text-slate-400 font-medium">
+                      #{inv.id.split('-')[0].toUpperCase()}
+                    </TableCell>
                     <TableCell className="py-4 font-semibold text-slate-800">{inv.title}</TableCell>
                     <TableCell className="py-4 text-center">
                       {inv.contract?.room?.room_number ? (
@@ -132,17 +153,39 @@ const AdminInvoices = () => {
                         <span className="text-slate-400 text-xs">-</span>
                       )}
                     </TableCell>
-                    <TableCell className="py-4 text-right font-bold text-rose-600">{Number(inv.amount).toLocaleString('vi-VN')} đ</TableCell>
-                    <TableCell className="py-4 text-center text-slate-600 font-medium">{new Date(inv.due_date).toLocaleDateString('vi-VN')}</TableCell>
+                    <TableCell className="py-4 text-right font-bold text-rose-600">
+                      {Number(inv.amount).toLocaleString('vi-VN')} đ
+                    </TableCell>
+                    <TableCell className="py-4 text-center text-slate-600 font-medium">
+                      {new Date(inv.due_date).toLocaleDateString('vi-VN')}
+                    </TableCell>
                     <TableCell className="py-4 text-center">
-                      {inv.status === 'PAID' ? <Badge status="success">Đã thanh toán</Badge> : 
-                       inv.status === 'UNPAID' ? <Badge status="danger">Chưa thanh toán</Badge> : 
-                       <Badge status="default">{inv.status}</Badge>}
+                      {inv.status === 'PAID' ? (
+                        <Badge status="success">Đã thanh toán</Badge>
+                      ) : inv.status === 'UNPAID' ? (
+                        <Badge status="danger">Chưa thanh toán</Badge>
+                      ) : (
+                        <Badge status="default">{inv.status}</Badge>
+                      )}
                     </TableCell>
                     <TableCell className="py-4 pr-6 text-right">
-                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                        {/* Nút bật mã QR thanh toán */}
+                        <Button
+                          variant="outline"
+                          className="h-8 px-2.5 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-1"
+                          onClick={() => handleOpenQrModal(inv)}
+                        >
+                          <QrCode className="w-3.5 h-3.5" /> Mã QR
+                        </Button>
+
+                        {/* Nút xác nhận thu tiền trực tiếp */}
                         {inv.status === 'UNPAID' && (
-                          <Button variant="outline" className="h-8 px-3 text-xs border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-colors" onClick={() => handleUpdateStatus(inv.id, 'PAID')}>
+                          <Button
+                            variant="outline"
+                            className="h-8 px-2.5 text-xs border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-colors"
+                            onClick={() => handleUpdateStatus(inv.id, 'PAID')}
+                          >
                             Xác nhận thu
                           </Button>
                         )}
@@ -156,37 +199,83 @@ const AdminInvoices = () => {
         )}
       </Card>
 
+      {/* Modal tạo hóa đơn */}
       <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title="Tạo hóa đơn mới">
         <form onSubmit={handleSave} className="space-y-4">
           <div>
             <label className="text-sm font-medium">Phòng / Hợp đồng</label>
-            <select required className="w-full border-slate-200 rounded-md mt-1 p-2" onChange={e => setFormData({...formData, contract_id: e.target.value})}>
+            <select
+              required
+              className="w-full border-slate-200 rounded-md mt-1 p-2"
+              onChange={e => setFormData({ ...formData, contract_id: e.target.value })}
+            >
               <option value="">Chọn phòng...</option>
-              {contracts.filter(c => c.status === 'ACTIVE').map(c => (
-                <option key={c.id} value={c.id}>Phòng {c.room.room_number} - {c.tenant.full_name}</option>
-              ))}
+              {contracts
+                .filter(c => c.status === 'ACTIVE')
+                .map(c => (
+                  <option key={c.id} value={c.id}>
+                    Phòng {c.room?.room_number} - {c.tenant?.full_name}
+                  </option>
+                ))}
             </select>
           </div>
           <div>
             <label className="text-sm font-medium">Tiêu đề hóa đơn</label>
-            <Input required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="VD: Hóa đơn tháng 9/2026" />
+            <Input
+              required
+              value={formData.title}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
+              placeholder="VD: Hóa đơn tháng 9/2026"
+            />
           </div>
           <div>
             <label className="text-sm font-medium">Tổng tiền (VNĐ)</label>
-            <Input required type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="Nhập số tiền..." />
-            {formData.amount && <p className="text-sm text-green-600 mt-1 font-medium">Hiển thị: {Number(formData.amount).toLocaleString('vi-VN')} đ</p>}
+            <Input
+              required
+              type="number"
+              value={formData.amount}
+              onChange={e => setFormData({ ...formData, amount: e.target.value })}
+              placeholder="Nhập số tiền..."
+            />
+            {formData.amount && (
+              <p className="text-sm text-green-600 mt-1 font-medium">
+                Hiển thị: {Number(formData.amount).toLocaleString('vi-VN')} đ
+              </p>
+            )}
           </div>
           <div>
             <label className="text-sm font-medium">Hạn thanh toán</label>
-            <Input required type="date" value={formData.due_date} onChange={e => setFormData({...formData, due_date: e.target.value})} />
+            <Input
+              required
+              type="date"
+              value={formData.due_date}
+              onChange={e => setFormData({ ...formData, due_date: e.target.value })}
+            />
           </div>
           <div>
             <label className="text-sm font-medium">Ghi chú / Chi tiết (Tiền phòng, điện, nước...)</label>
-            <textarea className="w-full border-slate-200 rounded-md mt-1 p-2" rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
+            <textarea
+              className="w-full border-slate-200 rounded-md mt-1 p-2"
+              rows={3}
+              value={formData.description}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
+            ></textarea>
           </div>
-          <Button type="submit" className="w-full">Tạo hóa đơn</Button>
+          <Button type="submit" className="w-full">
+            Tạo hóa đơn
+          </Button>
         </form>
       </Modal>
+
+      {/* Modal hiển thị mã VietQR thanh toán */}
+      {selectedInvoice && (
+        <PaymentModal
+          isOpen={isQrOpen}
+          onClose={() => setIsQrOpen(false)}
+          invoice={selectedInvoice}
+          onConfirmPaid={(invoiceId) => handleUpdateStatus(String(invoiceId), 'PAID')}
+        />
+      )}
     </div>
   );
 };
