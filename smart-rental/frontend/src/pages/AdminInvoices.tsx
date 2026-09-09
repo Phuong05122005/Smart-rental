@@ -13,12 +13,11 @@ import api from '../services/api';
 import * as XLSX from 'xlsx';
 
 const AdminInvoices = () => {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [contracts, setContracts] = useState<any[]>([]);
 
-  // State quản lý Modal VietQR
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isQrOpen, setIsQrOpen] = useState(false);
 
@@ -33,7 +32,7 @@ const AdminInvoices = () => {
   const fetchInvoices = () => {
     setLoading(true);
     getInvoices()
-      .then(res => setInvoices(res))
+      .then((res: any) => setInvoices(res))
       .catch(() => toast.error('Lỗi tải hóa đơn'))
       .finally(() => setLoading(false));
   };
@@ -68,7 +67,7 @@ const AdminInvoices = () => {
     }
   };
 
-  const handleOpenQrModal = (inv: Invoice) => {
+  const handleOpenQrModal = (inv: any) => {
     setSelectedInvoice({
       id: inv.id,
       room_name: inv.contract?.room?.room_number ? `Phòng ${inv.contract.room.room_number}` : 'Phòng trọ',
@@ -85,7 +84,7 @@ const AdminInvoices = () => {
       'Phòng': inv.contract?.room?.room_number || '-',
       'Số tiền': `${Number(inv.amount).toLocaleString('vi-VN')} đ`,
       'Hạn chót': new Date(inv.due_date).toLocaleDateString('vi-VN'),
-      'Trạng thái': inv.status === 'PAID' ? 'Đã thanh toán' : inv.status === 'UNPAID' ? 'Chưa thanh toán' : 'Quá hạn',
+      'Trạng thái': inv.status === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán',
       'Chi tiết': inv.description || ''
     }));
     const ws = XLSX.utils.json_to_sheet(data);
@@ -139,9 +138,9 @@ const AdminInvoices = () => {
               </TableHeader>
               <tbody className="divide-y divide-slate-100">
                 {invoices.map(inv => (
-                  <TableRow key={inv.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <TableRow key={inv.id} className="hover:bg-slate-50/50 transition-colors">
                     <TableCell className="pl-6 py-4 text-xs font-mono text-slate-400 font-medium">
-                      #{inv.id.split('-')[0].toUpperCase()}
+                      #{inv.id ? String(inv.id).split('-')[0].toUpperCase() : ''}
                     </TableCell>
                     <TableCell className="py-4 font-semibold text-slate-800">{inv.title}</TableCell>
                     <TableCell className="py-4 text-center">
@@ -162,32 +161,12 @@ const AdminInvoices = () => {
                     <TableCell className="py-4 text-center">
                       {inv.status === 'PAID' ? (
                         <Badge status="success">Đã thanh toán</Badge>
-                      ) : inv.status === 'UNPAID' ? (
-                        <Badge status="danger">Chưa thanh toán</Badge>
                       ) : (
-                        <Badge status="default">{inv.status}</Badge>
+                        <Badge status="danger">Chưa thanh toán</Badge>
                       )}
                     </TableCell>
                     <TableCell className="py-4 pr-6 text-right">
-                       <div className="flex justify-end gap-1.5">
-                        <Button
-                          variant="outline"
-                        className="h-8 px-2.5 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-1"
-                        onClick={() => handleOpenQrModal(inv)}
-                        >
-                        <QrCode className="w-3.5 h-3.5" /> Mã QR
-                        </Button>
-                        {inv.status !== 'PAID' && (
-                          <Button
-                            variant="outline"
-                            className="h-8 px-2.5 text-xs border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-colors"
-                            onClick={() => handleUpdateStatus(inv.id, 'PAID')}
-                          >
-                            Xác nhận thu
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
+                      <div className="flex justify-end items-center gap-1.5">
                         <Button
                           variant="outline"
                           className="h-8 px-2.5 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-1"
@@ -196,8 +175,7 @@ const AdminInvoices = () => {
                           <QrCode className="w-3.5 h-3.5" /> Mã QR
                         </Button>
 
-                        {/* Nút xác nhận thu tiền trực tiếp */}
-                        {inv.status === 'UNPAID' && (
+                        {inv.status !== 'PAID' && (
                           <Button
                             variant="outline"
                             className="h-8 px-2.5 text-xs border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-colors"
@@ -216,7 +194,6 @@ const AdminInvoices = () => {
         )}
       </Card>
 
-      {/* Modal tạo hóa đơn */}
       <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title="Tạo hóa đơn mới">
         <form onSubmit={handleSave} className="space-y-4">
           <div>
@@ -270,7 +247,7 @@ const AdminInvoices = () => {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Ghi chú / Chi tiết (Tiền phòng, điện, nước...)</label>
+            <label className="text-sm font-medium">Ghi chú / Chi tiết</label>
             <textarea
               className="w-full border-slate-200 rounded-md mt-1 p-2"
               rows={3}
@@ -284,7 +261,6 @@ const AdminInvoices = () => {
         </form>
       </Modal>
 
-      {/* Modal hiển thị mã VietQR thanh toán */}
       {selectedInvoice && (
         <PaymentModal
           isOpen={isQrOpen}
