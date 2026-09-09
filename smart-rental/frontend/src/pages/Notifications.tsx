@@ -51,7 +51,7 @@ const Notifications = () => {
     const type = notif.type || '';
 
     if (type === 'RENT_REQUEST' || notif.title?.includes('Yêu cầu thuê phòng')) {
-      navigate('/contracts', { state: { openCreateModal: true } });
+      navigate(`/contracts?action=create&autoFill=${encodeURIComponent(notif.content || '')}`);
     } else if (type.startsWith('INVOICE') || type.startsWith('OVERDUE_')) {
       navigate(isTenant ? '/my-invoices' : '/invoices');
     } else if (type.startsWith('SYSTEM')) {

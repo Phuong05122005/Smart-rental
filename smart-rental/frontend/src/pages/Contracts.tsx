@@ -14,7 +14,7 @@ import { getContracts, createContract, updateContract, type Contract } from '../
 import { getRooms, type Room } from '../services/roomService';
 import { getTenants, type Tenant } from '../services/tenantService';
 import { useAuth } from '../contexts/AuthContext';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 const Contracts = () => {
   const { user } = useAuth();
@@ -73,15 +73,23 @@ const Contracts = () => {
     fetchContracts();
   };
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
+  
   useEffect(() => {
-    if (location.state?.openCreateModal) {
-      openForm(location.state?.autoFillFrom);
-      // Clean up React Router state so it doesn't reopen on reload
-      navigate(location.pathname, { replace: true, state: {} });
+    const action = searchParams.get('action');
+    const autoFillFrom = searchParams.get('autoFill');
+
+    if (action === 'create') {
+      openForm(autoFillFrom || undefined);
+      // Clean up URL so it doesn't reopen on reload
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('action');
+      newParams.delete('autoFill');
+      setSearchParams(newParams, { replace: true });
     }
-  }, [location]);
+  }, [searchParams]);
 
   const loadFormDependencies = async (autoFillFrom?: string) => {
     try {
@@ -94,9 +102,22 @@ const Contracts = () => {
       setTenantsList(tRes.data);
 
       if (autoFillFrom) {
-        // Tìm khách thuê và phòng dựa trên việc chuỗi có chứa tên/phòng không (Robust hơn Regex)
-        const matchedTenant = tRes.data.find((t: any) => autoFillFrom.includes(t.full_name) || (t.username && autoFillFrom.includes(t.username)));
-        const matchedRoom = rRes.data.find((r: any) => autoFillFrom.includes(String(r.room_number)));
+        // Tìm khách thuê và phòng dựa trên URL query param (Đảm bảo không bị mất state)
+        const decodedString = decodeURIComponent(autoFillFrom).toLowerCase();
+        
+        // Tìm khách thuê
+        const matchedTenant = tRes.data.find((t: any) => {
+          if (!t.full_name) return false;
+          return decodedString.includes(t.full_name.toLowerCase());
+        });
+
+        // Tìm phòng (tìm con số cuối cùng hoặc match cụm 'phòng 104')
+        const matchedRoom = rRes.data.find((r: any) => 
+          decodedString.includes(`phòng ${String(r.room_number).toLowerCase()}`) || 
+          decodedString.includes(` ${String(r.room_number).toLowerCase()} `) ||
+          decodedString.endsWith(String(r.room_number).toLowerCase()) ||
+          decodedString.endsWith(`${String(r.room_number).toLowerCase()}.`)
+        );
         
         if (matchedTenant || matchedRoom) {
           const today = new Date();
@@ -112,6 +133,8 @@ const Contracts = () => {
             end_date: nextYear.toISOString().split('T')[0]
           }));
           toast.success('Đã tự động điền thông tin từ yêu cầu thuê phòng!');
+        } else {
+          toast.error('Không thể tìm thấy khách thuê hoặc phòng hợp lệ để tự động điền.');
         }
       }
     } catch (err) {
