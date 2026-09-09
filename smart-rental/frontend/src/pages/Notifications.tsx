@@ -50,7 +50,9 @@ const Notifications = () => {
     const isTenant = user?.role === 'TENANT';
     const type = notif.type || '';
 
-    if (type.startsWith('INVOICE') || type.startsWith('OVERDUE_')) {
+    if (type === 'RENT_REQUEST' || notif.title?.includes('Yêu cầu thuê phòng')) {
+      navigate('/rooms');
+    } else if (type.startsWith('INVOICE') || type.startsWith('OVERDUE_')) {
       navigate(isTenant ? '/my-invoices' : '/invoices');
     } else if (type.startsWith('SYSTEM')) {
       navigate(isTenant ? '/my-maintenance' : '/maintenance');

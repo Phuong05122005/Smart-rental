@@ -203,7 +203,7 @@ export const requestRent = async (req: AuthRequest, res: Response): Promise<void
           user_id: admin.id,
           title: 'Yêu cầu thuê phòng mới',
           content: `Khách thuê ${tenantName} vừa gửi yêu cầu muốn thuê phòng ${room.room_number}.`,
-          type: 'SYSTEM'
+          type: 'RENT_REQUEST'
         }
       });
     }
