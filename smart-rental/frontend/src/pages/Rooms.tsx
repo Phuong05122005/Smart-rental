@@ -73,6 +73,7 @@ const Rooms = () => {
 
   useEffect(() => {
     fetchRooms();
+    fetchHouses();
   }, [page, statusFilter]);
 
   // Handle Search submit
