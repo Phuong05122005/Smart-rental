@@ -309,52 +309,65 @@ const Contracts = () => {
 
       {/* Create Contract Modal */}
       <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title="Tạo hợp đồng mới">
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-5">
           <div>
-            <label className="text-sm font-medium text-slate-700">Khách thuê *</label>
-            <select required className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm mt-1" value={formData.tenant_id} onChange={e => setFormData({...formData, tenant_id: e.target.value})}>
-              <option value="">-- Chọn khách thuê --</option>
-              {tenantsList.map(t => <option key={t.id} value={t.id}>{t.full_name} ({t.identity_number})</option>)}
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Khách thuê <span className="text-red-500">*</span></label>
+            <select required className="w-full px-4 h-11 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm cursor-pointer transition-colors" value={formData.tenant_id} onChange={e => setFormData({...formData, tenant_id: e.target.value})}>
+              <option value="" disabled>-- Chọn khách thuê --</option>
+              {tenantsList.map(t => <option key={t.id} value={t.id}>👤 {t.full_name} ({t.identity_number})</option>)}
             </select>
           </div>
+          
           <div>
-            <label className="text-sm font-medium text-slate-700">Phòng (Chỉ phòng Trống) *</label>
-            <select required className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm mt-1" value={formData.room_id} onChange={e => setFormData({...formData, room_id: e.target.value})}>
-              <option value="">-- Chọn phòng --</option>
-              {roomsList.map(r => <option key={r.id} value={r.id}>Phòng {r.room_number} - {Number(r.price).toLocaleString()}đ</option>)}
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Phòng (Chỉ phòng trống) <span className="text-red-500">*</span></label>
+            <select required className="w-full px-4 h-11 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm cursor-pointer transition-colors" value={formData.room_id} onChange={e => {
+              const selectedRoom = roomsList.find(r => r.id === e.target.value);
+              setFormData({...formData, room_id: e.target.value, rent_price: selectedRoom ? selectedRoom.price.toString() : ''});
+            }}>
+              <option value="" disabled>-- Chọn phòng --</option>
+              {roomsList.map(r => <option key={r.id} value={r.id}>🚪 Phòng {r.room_number} - {Number(r.price).toLocaleString()} ₫</option>)}
             </select>
+            <p className="text-xs text-slate-500 mt-2">Giá phòng sẽ được tự động điền khi bạn chọn phòng.</p>
           </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-slate-700">Ngày bắt đầu *</label>
-              <Input required type="date" value={formData.start_date} onChange={e => setFormData({...formData, start_date: e.target.value})} />
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Ngày bắt đầu <span className="text-red-500">*</span></label>
+              <Input required type="date" className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.start_date} onChange={e => setFormData({...formData, start_date: e.target.value})} />
             </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Ngày kết thúc *</label>
-              <Input required type="date" value={formData.end_date} onChange={e => setFormData({...formData, end_date: e.target.value})} />
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Ngày kết thúc <span className="text-red-500">*</span></label>
+              <Input required type="date" className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.end_date} onChange={e => setFormData({...formData, end_date: e.target.value})} />
             </div>
           </div>
+
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-slate-700">Giá thuê (VNĐ) *</label>
-              <Input required type="number" min="1" value={formData.rent_price} onChange={e => setFormData({...formData, rent_price: e.target.value})} />
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Giá thuê (VNĐ) <span className="text-red-500">*</span></label>
+              <Input required type="number" min="1" className="h-11 text-sm font-bold shadow-sm text-blue-700 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.rent_price} onChange={e => setFormData({...formData, rent_price: e.target.value})} />
               {formData.rent_price && (
-                <p className="text-sm text-green-600 mt-1 font-medium">
-                  Hiển thị: {Number(formData.rent_price).toLocaleString('vi-VN')} đ
+                <p className="text-[11px] text-slate-500 mt-1.5 font-medium flex items-center gap-1">
+                  Mức giá: <span className="text-green-700 font-bold bg-green-50 px-1.5 py-0.5 rounded border border-green-200">{Number(formData.rent_price).toLocaleString('vi-VN')} ₫</span>
                 </p>
               )}
             </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Tiền cọc (VNĐ) *</label>
-              <Input required type="number" min="0" value={formData.deposit} onChange={e => setFormData({...formData, deposit: e.target.value})} />
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tiền cọc (VNĐ) <span className="text-red-500">*</span></label>
+              <Input required type="number" min="0" className="h-11 text-sm font-bold shadow-sm text-blue-700 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.deposit} onChange={e => setFormData({...formData, deposit: e.target.value})} />
               {formData.deposit && (
-                <p className="text-sm text-green-600 mt-1 font-medium">
-                  Hiển thị: {Number(formData.deposit).toLocaleString('vi-VN')} đ
+                <p className="text-[11px] text-slate-500 mt-1.5 font-medium flex items-center gap-1">
+                  Tiền cọc: <span className="text-green-700 font-bold bg-green-50 px-1.5 py-0.5 rounded border border-green-200">{Number(formData.deposit).toLocaleString('vi-VN')} ₫</span>
                 </p>
               )}
             </div>
           </div>
-          <Button type="submit" className="w-full">Tạo Hợp Đồng</Button>
+
+          <div className="pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" className="h-11 px-6 font-medium" onClick={() => setIsFormOpen(false)}>Hủy</Button>
+              <Button type="submit" className="h-11 px-6 font-semibold bg-blue-600 hover:bg-blue-700 shadow-sm">Tạo hợp đồng</Button>
+            </div>
+          </div>
         </form>
       </Modal>
 
