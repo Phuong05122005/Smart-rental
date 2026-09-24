@@ -102,50 +102,54 @@ const AvailableRooms = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {rooms.map((room) => (
-              <Card key={room.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-slate-200">
-                <div className="h-32 bg-slate-100 relative flex items-center justify-center border-b border-slate-200">
-                  <DoorOpen className="w-12 h-12 text-slate-300" />
-                  <div className="absolute top-3 right-3">
+              <Card key={room.id} className="overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-slate-200 rounded-2xl group">
+                <div className="h-40 bg-gradient-to-br from-blue-50 to-slate-100 relative flex items-center justify-center border-b border-slate-100 group-hover:from-blue-100/50 transition-colors">
+                  <DoorOpen className="w-16 h-16 text-blue-200 group-hover:text-blue-300 transition-colors drop-shadow-sm" />
+                  <div className="absolute top-4 right-4">
                     {getStatusBadge(room.status)}
                   </div>
-                  <div className="absolute bottom-3 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg border border-slate-200 shadow-sm font-bold text-slate-800 flex items-center gap-2">
+                  <div className="absolute -bottom-5 left-6 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-md font-black text-slate-800 flex items-center gap-2 text-lg">
                     Phòng {room.room_number}
                   </div>
                 </div>
-                <CardContent className="p-5 space-y-4">
-                  <div className="flex justify-between items-start">
+                <CardContent className="p-6 pt-10 space-y-5">
+                  <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-2xl font-bold text-blue-600">
-                        {Number(room.price).toLocaleString('vi-VN')} <span className="text-sm text-slate-500 font-normal">đ/tháng</span>
+                      <p className="text-3xl font-black text-blue-700 tracking-tight">
+                        {Number(room.price).toLocaleString('vi-VN')} <span className="text-sm text-slate-500 font-medium">₫/tháng</span>
                       </p>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3 text-sm text-slate-600 border-y border-slate-100 py-3">
-                    <div className="flex items-center gap-2">
-                      <Tag className="w-4 h-4 text-slate-400" />
-                      <span className="font-medium text-slate-800">{room.room_type || 'Tiêu chuẩn'}</span>
+                  <div className="grid grid-cols-2 gap-4 text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 bg-white rounded-md shadow-sm text-slate-400"><Tag className="w-4 h-4" /></div>
+                      <span className="font-semibold text-slate-700 truncate">{room.room_type || 'Tiêu chuẩn'}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Maximize2 className="w-4 h-4 text-slate-400" />
-                      <span className="font-medium text-slate-800">{room.area} m²</span>
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 bg-white rounded-md shadow-sm text-slate-400"><Maximize2 className="w-4 h-4" /></div>
+                      <span className="font-semibold text-slate-700">{room.area} m²</span>
                     </div>
                   </div>
                   
                   {room.description && (
-                    <p className="text-sm text-slate-500 line-clamp-2" title={room.description}>
+                    <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed h-10">
                       {room.description}
                     </p>
                   )}
                   
                   <div className="pt-2">
-                    <Button 
-                      className="w-full" 
+                    <button 
+                      className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-sm ${room.status === 'AVAILABLE' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white hover:shadow-md' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
                       disabled={room.status !== 'AVAILABLE'}
                       onClick={() => handleRequestRent(room.id)}
                     >
-                      {room.status === 'AVAILABLE' ? 'Đăng ký thuê phòng này' : 'Không thể đăng ký'}
-                    </Button>
+                      {room.status === 'AVAILABLE' ? (
+                        <>Đăng ký thuê phòng ngay</>
+                      ) : (
+                        <>Không thể đăng ký</>
+                      )}
+                    </button>
                   </div>
                 </CardContent>
               </Card>

@@ -129,3 +129,54 @@ export const deleteRoom = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ message: 'Lỗi server hoặc phòng đang có hợp đồng' });
   }
 };
+
+export const requestRentRoom = async (req: any, res: any): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const room = await prisma.room.findUnique({
+      where: { id },
+      include: { house: true }
+    });
+
+    if (!room) {
+      res.status(404).json({ message: 'Không tìm thấy phòng' });
+      return;
+    }
+
+    if (room.status !== 'AVAILABLE') {
+      res.status(400).json({ message: 'Phòng này không còn trống' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    // Send notification to ADMIN and LANDLORD
+    const admins = await prisma.user.findMany({
+      where: { role: { in: ['ADMIN', 'LANDLORD'] } }
+    });
+
+    const notifications = admins.map(admin => ({
+      user_id: admin.id,
+      title: 'Yêu cầu thuê phòng mới',
+      content: `Khách hàng ${user?.full_name || user?.username} vừa gửi yêu cầu đăng ký thuê Phòng ${room.room_number} tại ${room.house?.name}.`,
+      type: 'INFO',
+    }));
+
+    if (notifications.length > 0) {
+      await prisma.notification.createMany({
+        data: notifications
+      });
+    }
+
+    res.status(200).json({ message: 'Đã gửi yêu cầu thành công' });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
