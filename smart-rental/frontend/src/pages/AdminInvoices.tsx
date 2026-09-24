@@ -135,7 +135,7 @@ const AdminInvoices = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold text-slate-800">Quản lý Hóa Đơn</h1>
         <div className="flex gap-3 w-full sm:w-auto">
-          <Button onClick={() => setIsGenerateOpen(true)} className="flex items-center gap-2 flex-1 sm:flex-none justify-center font-medium shadow-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">
+          <Button variant="outline" onClick={() => setIsGenerateOpen(true)} className="flex items-center gap-2 flex-1 sm:flex-none justify-center font-medium shadow-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">
             <RefreshCw className="h-4 w-4" />
             Tạo tự động
           </Button>
