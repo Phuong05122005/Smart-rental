@@ -41,11 +41,12 @@ const TenantInvoices = () => {
 
   const getVietQRUrl = (inv: Invoice, shortId: string) => {
     const bankId = inv.creator?.bank_name || 'MB';
+      const safeBankId = bankId.split(' ')[0].toUpperCase();
     const accountNo = inv.creator?.bank_account || '1010105122005';
     const accountName = inv.creator?.bank_owner || inv.creator?.full_name || 'NGUYEN THAI PHUONG';
     const amount = Number(inv.amount);
     const addInfo = encodeURIComponent(`HD ${shortId}`);
-    return `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${addInfo}&accountName=${encodeURIComponent(accountName)}`;
+    return `https://img.vietqr.io/image/${safeBankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${addInfo}&accountName=${encodeURIComponent(accountName)}`;
   };
 
   if (loading) return <div className="p-8 text-center text-slate-500 flex justify-center items-center h-64">Đang tải hóa đơn...</div>;

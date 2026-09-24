@@ -25,7 +25,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   if (!isOpen) return null;
 
   // Cấu hình thông tin tài khoản nhận tiền
-  const BANK_ID = (invoice as any).creator?.bank_name || 'MB'; 
+  const BANK_ID = (invoice as any).creator?.bank_name || 'MB';
+  const safeBankId = BANK_ID.split(' ')[0].toUpperCase(); 
   const ACCOUNT_NO = (invoice as any).creator?.bank_account || '1010105122005'; 
   const ACCOUNT_NAME = (invoice as any).creator?.bank_owner || (invoice as any).creator?.full_name || 'NGUYEN THAI PHUONG'; 
 
@@ -35,7 +36,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // URL sinh mã QR trực tiếp từ VietQR
   const amount = Number(invoice.total_amount);
-  const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+  const qrUrl = `https://img.vietqr.io/image/${safeBankId}-${ACCOUNT_NO}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
