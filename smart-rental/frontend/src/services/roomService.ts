@@ -40,3 +40,8 @@ export const requestRentRoom = async (id: string) => {
   const response = await api.post(`/rooms/${id}/rent-request`);
   return response.data;
 };
+
+export const predictRoomPrice = async (area: number, capacity: number) => {
+  const response = await api.post('/ai/predict-price', { area, capacity });
+  return response.data;
+};

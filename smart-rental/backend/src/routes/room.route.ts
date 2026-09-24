@@ -1,19 +1,15 @@
 import { Router } from 'express';
-import { getRooms, getRoom, createRoom, updateRoom, deleteRoom, requestRent } from '../controllers/room.controller';
+import { getRooms, getRoomById, createRoom, updateRoom, deleteRoom } from '../controllers/room.controller';
 import { authenticate, authorize } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-// Apply auth middleware to all routes
-router.use(authenticate);
+router.use(authenticate as any);
 
-router.get('/', getRooms);
-router.get('/:id', getRoom);
-router.post('/', authorize(['ADMIN', 'LANDLORD', 'STAFF']), createRoom);
-router.put('/:id', authorize(['ADMIN', 'LANDLORD', 'STAFF']), updateRoom);
-router.delete('/:id', authorize(['ADMIN', 'LANDLORD', 'STAFF']), deleteRoom);
-
-// Route for tenants to request renting a room
-router.post('/:id/rent-request', authorize(['TENANT']), requestRent);
+router.get('/', getRooms as any);
+router.get('/:id', getRoomById as any);
+router.post('/', authorize(['ADMIN', 'LANDLORD', 'STAFF']) as any, createRoom as any);
+router.put('/:id', authorize(['ADMIN', 'LANDLORD', 'STAFF']) as any, updateRoom as any);
+router.delete('/:id', authorize(['ADMIN', 'LANDLORD', 'STAFF']) as any, deleteRoom as any);
 
 export default router;

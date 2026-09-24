@@ -14,6 +14,10 @@ import userRoute from './routes/user.route';
 import myRoomRoute from './routes/my-room.route';
 import invoiceRoute from './routes/invoice.route';
 import maintenanceRoute from './routes/maintenance.route';
+import houseRoute from './routes/house.route';
+import serviceRoute from './routes/service.route';
+import meterReadingRoute from './routes/meter-reading.route';
+import aiRoute from './routes/ai.route';
 
 dotenv.config({ path: '../.env' });
 
@@ -40,6 +44,10 @@ app.use('/api/users', userRoute);
 app.use('/api/my-room', myRoomRoute);
 app.use('/api/invoices', invoiceRoute);
 app.use('/api/maintenance', maintenanceRoute);
+app.use('/api/houses', houseRoute);
+app.use('/api/services', serviceRoute);
+app.use('/api/meter-readings', meterReadingRoute);
+app.use('/api/ai', aiRoute);
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',

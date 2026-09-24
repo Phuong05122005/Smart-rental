@@ -3,272 +3,216 @@ import { Card } from '../components/ui/Card';
 import { Table, TableHeader, TableRow, TableHead, TableCell } from '../components/ui/Table';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
-import { PaymentModal } from '../components/ui/PaymentModal';
-import { Plus, Download, QrCode } from 'lucide-react';
+import { Input } from '../components/ui/Input';
+import { Plus, Download, RefreshCw, DollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getInvoices, createInvoice, updateInvoiceStatus, type Invoice } from '../services/invoiceService';
+import { getHouses, type House } from '../services/houseService';
 import api from '../services/api';
-import * as XLSX from 'xlsx';
 
 const AdminInvoices = () => {
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [houses, setHouses] = useState<House[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [contracts, setContracts] = useState<any[]>([]);
 
+  // Generate modal
+  const [isGenerateOpen, setIsGenerateOpen] = useState(false);
+  const [genMonth, setGenMonth] = useState(new Date().getMonth() + 1);
+  const [genYear, setGenYear] = useState(new Date().getFullYear());
+  const [genHouse, setGenHouse] = useState('');
+
+  // Payment modal
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
-  const [isQrOpen, setIsQrOpen] = useState(false);
+  const [payAmount, setPayAmount] = useState('');
+  const [payMethod, setPayMethod] = useState('CASH');
+  const [payNote, setPayNote] = useState('');
 
-  const [formData, setFormData] = useState({
-    contract_id: '',
-    title: '',
-    amount: '',
-    due_date: '',
-    description: ''
-  });
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/invoices');
+      setInvoices(res.data);
+    } catch (err) {
+      toast.error('Lỗi tải hóa đơn');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const fetchInvoices = () => {
-    setLoading(true);
-    getInvoices()
-      .then((res: any) => setInvoices(res))
-      .catch(() => toast.error('Lỗi tải hóa đơn'))
-      .finally(() => setLoading(false));
+  const fetchHouses = async () => {
+    try {
+      const data = await getHouses();
+      setHouses(data);
+      if (data.length > 0) setGenHouse(data[0].id);
+    } catch (err) {}
   };
 
   useEffect(() => {
     fetchInvoices();
-    api.get('/contracts').then(res => setContracts(res.data.data)).catch(() => {});
+    fetchHouses();
   }, []);
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!genHouse) {
+      toast.error('Vui lòng chọn nhà trọ');
+      return;
+    }
     try {
-      await createInvoice({
-        ...formData,
-        amount: Number(formData.amount)
+      const res = await api.post('/invoices/generate', { house_id: genHouse, month: genMonth, year: genYear });
+      toast.success(res.data.message || 'Thành công');
+      setIsGenerateOpen(false);
+      fetchInvoices();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
+    }
+  };
+
+  const handlePay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInvoice || !payAmount) return;
+    try {
+      await api.post(`/invoices/${selectedInvoice.id}/pay`, {
+        amount: Number(payAmount),
+        payment_method: payMethod,
+        note: payNote
       });
-      toast.success('Tạo hóa đơn thành công');
-      setIsFormOpen(false);
+      toast.success('Thanh toán thành công');
+      setIsPaymentOpen(false);
       fetchInvoices();
-    } catch {
-      toast.error('Lỗi khi tạo hóa đơn');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Lỗi thanh toán');
     }
-  };
-
-  const handleUpdateStatus = async (id: string, status: string) => {
-    try {
-      await updateInvoiceStatus(id, status);
-      toast.success('Cập nhật trạng thái thành công');
-      fetchInvoices();
-    } catch {
-      toast.error('Lỗi cập nhật trạng thái');
-    }
-  };
-
-  const handleOpenQrModal = (inv: any) => {
-    setSelectedInvoice({
-      id: inv.id,
-      room_name: inv.contract?.room?.room_number ? `Phòng ${inv.contract.room.room_number}` : 'Phòng trọ',
-      total_amount: Number(inv.amount),
-      status: inv.status
-    });
-    setIsQrOpen(true);
-  };
-
-  const exportToExcel = () => {
-    const data = invoices.map(inv => ({
-      'Mã HĐ': inv.id,
-      'Tiêu đề': inv.title,
-      'Phòng': inv.contract?.room?.room_number || '-',
-      'Số tiền': `${Number(inv.amount).toLocaleString('vi-VN')} đ`,
-      'Hạn chót': new Date(inv.due_date).toLocaleDateString('vi-VN'),
-      'Trạng thái': inv.status === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán',
-      'Chi tiết': inv.description || ''
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "HoaDon");
-    XLSX.writeFile(wb, "DanhSachHoaDon.xlsx");
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-xl font-bold text-slate-800">Quản lý Hóa đơn</h2>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Quản lý Hóa Đơn</h1>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={exportToExcel}>
-            <Download className="w-4 h-4" /> Xuất Excel
+          <Button onClick={() => setIsGenerateOpen(true)} className="flex items-center gap-2" variant="outline">
+            <RefreshCw className="h-4 w-4" />
+            Tạo tự động
           </Button>
-          <Button className="gap-2" onClick={() => setIsFormOpen(true)}>
-            <Plus className="w-4 h-4" /> Tạo hóa đơn
+          <Button onClick={() => {}} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Tạo thủ công
           </Button>
         </div>
       </div>
 
-      <Card className="shadow-sm border-slate-100 overflow-hidden rounded-xl">
-        <div className="p-5 border-b border-slate-100 bg-slate-50/50">
-          <h3 className="font-semibold text-slate-800">Danh sách Hóa đơn</h3>
-          <p className="text-sm text-slate-500">Quản lý các khoản thu và trạng thái thanh toán của khách thuê</p>
-        </div>
-
-        {loading ? (
-          <div className="p-12 text-center text-slate-500 flex flex-col items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-            Đang tải dữ liệu hóa đơn...
-          </div>
-        ) : invoices.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 flex flex-col items-center">
-            <p className="text-slate-400">Chưa có hóa đơn nào trong hệ thống.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table className="w-full text-sm text-left">
-              <TableHeader className="bg-slate-50/80 border-b border-slate-100 uppercase text-xs font-semibold text-slate-500 tracking-wider">
-                <TableRow>
-                  <TableHead className="py-4 pl-6">Mã HĐ</TableHead>
-                  <TableHead className="py-4">Tiêu đề</TableHead>
-                  <TableHead className="py-4 text-center">Phòng</TableHead>
-                  <TableHead className="py-4 text-right">Số tiền</TableHead>
-                  <TableHead className="py-4 text-center">Hạn chót</TableHead>
-                  <TableHead className="py-4 text-center">Trạng thái</TableHead>
-                  <TableHead className="py-4 text-right pr-6">Thao tác</TableHead>
+      <Card className="p-4 overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tiêu đề</TableHead>
+              <TableHead>Phòng</TableHead>
+              <TableHead>Khách thuê</TableHead>
+              <TableHead>Tổng tiền</TableHead>
+              <TableHead>Đã thu</TableHead>
+              <TableHead>Trạng thái</TableHead>
+              <TableHead className="text-right">Thao tác</TableHead>
+            </TableRow>
+          </TableHeader>
+          <tbody>
+            {invoices.map((inv) => {
+              const paid = inv.receipts?.reduce((sum: number, r: any) => sum + Number(r.amount), 0) || 0;
+              return (
+                <TableRow key={inv.id}>
+                  <TableCell className="font-medium">{inv.title}</TableCell>
+                  <TableCell>{inv.contract?.room?.room_number}</TableCell>
+                  <TableCell>{inv.contract?.tenant?.full_name}</TableCell>
+                  <TableCell>{Number(inv.amount).toLocaleString()} ₫</TableCell>
+                  <TableCell className="text-green-600">{paid.toLocaleString()} ₫</TableCell>
+                  <TableCell>
+                    <Badge variant={inv.status === 'PAID' ? 'success' : inv.status === 'PARTIALLY_PAID' ? 'warning' : 'danger'}>
+                      {inv.status === 'PAID' ? 'Đã thu' : inv.status === 'PARTIALLY_PAID' ? 'Thu một phần' : 'Chưa thu'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => { setSelectedInvoice(inv); setPayAmount(''); setPayNote(''); setIsPaymentOpen(true); }}
+                      disabled={inv.status === 'PAID'}
+                    >
+                      <DollarSign className="h-4 w-4 mr-1" /> Thu tiền
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <tbody className="divide-y divide-slate-100">
-                {invoices.map(inv => (
-                  <TableRow key={inv.id} className="hover:bg-slate-50/50 transition-colors">
-                    <TableCell className="pl-6 py-4 text-xs font-mono text-slate-400 font-medium">
-                      #{inv.id ? String(inv.id).split('-')[0].toUpperCase() : ''}
-                    </TableCell>
-                    <TableCell className="py-4 font-semibold text-slate-800">{inv.title}</TableCell>
-                    <TableCell className="py-4 text-center">
-                      {inv.contract?.room?.room_number ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                          {inv.contract.room.room_number}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-xs">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-4 text-right font-bold text-rose-600">
-                      {Number(inv.amount).toLocaleString('vi-VN')} đ
-                    </TableCell>
-                    <TableCell className="py-4 text-center text-slate-600 font-medium">
-                      {new Date(inv.due_date).toLocaleDateString('vi-VN')}
-                    </TableCell>
-                    <TableCell className="py-4 text-center">
-                      {inv.status === 'PAID' ? (
-                        <Badge status="success">Đã thanh toán</Badge>
-                      ) : (
-                        <Badge status="danger">Chưa thanh toán</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-4 pr-6 text-right">
-                      <div className="flex justify-end items-center gap-1.5">
-                        <Button
-                          variant="outline"
-                          className="h-8 px-2.5 text-xs border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-1"
-                          onClick={() => handleOpenQrModal(inv)}
-                        >
-                          <QrCode className="w-3.5 h-3.5" /> Mã QR
-                        </Button>
-
-                        {inv.status !== 'PAID' && (
-                          <Button
-                            variant="outline"
-                            className="h-8 px-2.5 text-xs border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-colors"
-                            onClick={() => handleUpdateStatus(inv.id, 'PAID')}
-                          >
-                            Xác nhận thu
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-        )}
+              );
+            })}
+          </tbody>
+        </Table>
       </Card>
 
-      <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title="Tạo hóa đơn mới">
-        <form onSubmit={handleSave} className="space-y-4">
+      {/* Modal tạo tự động */}
+      <Modal isOpen={isGenerateOpen} onClose={() => setIsGenerateOpen(false)} title="Tạo hóa đơn hàng loạt">
+        <form onSubmit={handleGenerate} className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Phòng / Hợp đồng</label>
-            <select
-              required
-              className="w-full border-slate-200 rounded-md mt-1 p-2"
-              onChange={e => setFormData({ ...formData, contract_id: e.target.value })}
-            >
-              <option value="">Chọn phòng...</option>
-              {contracts
-                .filter(c => c.status === 'ACTIVE')
-                .map(c => (
-                  <option key={c.id} value={c.id}>
-                    Phòng {c.room?.room_number} - {c.tenant?.full_name}
-                  </option>
-                ))}
+            <label className="block text-sm mb-1">Nhà trọ</label>
+            <select className="w-full border-gray-300 rounded-md p-2" value={genHouse} onChange={e => setGenHouse(e.target.value)}>
+              {houses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
             </select>
           </div>
-          <div>
-            <label className="text-sm font-medium">Tiêu đề hóa đơn</label>
-            <Input
-              required
-              value={formData.title}
-              onChange={e => setFormData({ ...formData, title: e.target.value })}
-              placeholder="VD: Hóa đơn tháng 9/2026"
-            />
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm mb-1">Tháng</label>
+              <select className="w-full border-gray-300 rounded-md p-2" value={genMonth} onChange={e => setGenMonth(Number(e.target.value))}>
+                {Array.from({length: 12}, (_, i) => i + 1).map(m => <option key={m} value={m}>Tháng {m}</option>)}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm mb-1">Năm</label>
+              <Input type="number" value={genYear} onChange={e => setGenYear(Number(e.target.value))} />
+            </div>
           </div>
-          <div>
-            <label className="text-sm font-medium">Tổng tiền (VNĐ)</label>
-            <Input
-              required
-              type="number"
-              value={formData.amount}
-              onChange={e => setFormData({ ...formData, amount: e.target.value })}
-              placeholder="Nhập số tiền..."
-            />
-            {formData.amount && (
-              <p className="text-sm text-green-600 mt-1 font-medium">
-                Hiển thị: {Number(formData.amount).toLocaleString('vi-VN')} đ
-              </p>
-            )}
+          <p className="text-xs text-gray-500">Hệ thống sẽ tự động quét các phòng đang thuê, cộng tiền phòng và tiền điện nước (nếu đã chốt chỉ số) để xuất hóa đơn.</p>
+          <div className="flex justify-end gap-3 mt-6">
+            <Button type="button" variant="outline" onClick={() => setIsGenerateOpen(false)}>Hủy</Button>
+            <Button type="submit">Bắt đầu tạo</Button>
           </div>
-          <div>
-            <label className="text-sm font-medium">Hạn thanh toán</label>
-            <Input
-              required
-              type="date"
-              value={formData.due_date}
-              onChange={e => setFormData({ ...formData, due_date: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">Ghi chú / Chi tiết</label>
-            <textarea
-              className="w-full border-slate-200 rounded-md mt-1 p-2"
-              rows={3}
-              value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
-            ></textarea>
-          </div>
-          <Button type="submit" className="w-full">
-            Tạo hóa đơn
-          </Button>
         </form>
       </Modal>
 
-      {selectedInvoice && (
-        <PaymentModal
-          isOpen={isQrOpen}
-          onClose={() => setIsQrOpen(false)}
-          invoice={selectedInvoice}
-          onConfirmPaid={(invoiceId) => handleUpdateStatus(String(invoiceId), 'PAID')}
-        />
-      )}
+      {/* Modal thanh toán */}
+      <Modal isOpen={isPaymentOpen} onClose={() => setIsPaymentOpen(false)} title="Thu tiền hóa đơn">
+        <form onSubmit={handlePay} className="space-y-4">
+          {selectedInvoice && (
+            <>
+              <div className="bg-gray-50 p-3 rounded-md mb-4">
+                <p><strong>Hóa đơn:</strong> {selectedInvoice.title}</p>
+                <p><strong>Phòng:</strong> {selectedInvoice.contract?.room?.room_number}</p>
+                <p><strong>Tổng tiền:</strong> {Number(selectedInvoice.amount).toLocaleString()} ₫</p>
+                <p><strong>Đã thu:</strong> {(selectedInvoice.receipts?.reduce((s:number,r:any)=>s+Number(r.amount),0)||0).toLocaleString()} ₫</p>
+                <p className="text-red-600 font-bold"><strong>Còn nợ:</strong> {(Number(selectedInvoice.amount) - (selectedInvoice.receipts?.reduce((s:number,r:any)=>s+Number(r.amount),0)||0)).toLocaleString()} ₫</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm mb-1">Số tiền khách trả đợt này</label>
+                <Input required type="number" min="1" max={Number(selectedInvoice.amount) - (selectedInvoice.receipts?.reduce((s:number,r:any)=>s+Number(r.amount),0)||0)} value={payAmount} onChange={e => setPayAmount(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Hình thức thanh toán</label>
+                <select className="w-full border-gray-300 rounded-md p-2" value={payMethod} onChange={e => setPayMethod(e.target.value)}>
+                  <option value="CASH">Tiền mặt</option>
+                  <option value="BANK_TRANSFER">Chuyển khoản</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Ghi chú (Tùy chọn)</label>
+                <Input value={payNote} onChange={e => setPayNote(e.target.value)} placeholder="VD: Khách chuyển khoản..." />
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <Button type="button" variant="outline" onClick={() => setIsPaymentOpen(false)}>Hủy</Button>
+                <Button type="submit">Xác nhận thu tiền</Button>
+              </div>
+            </>
+          )}
+        </form>
+      </Modal>
     </div>
   );
 };

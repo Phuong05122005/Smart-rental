@@ -23,6 +23,7 @@ enum RoomStatus {
   AVAILABLE
   RENTED
   MAINTENANCE
+  DEPOSITED
 }
 
 enum ContractStatus {
@@ -33,6 +34,7 @@ enum ContractStatus {
 
 enum InvoiceStatus {
   PENDING
+  PARTIALLY_PAID
   PAID
   UNPAID
   OVERDUE
@@ -46,24 +48,46 @@ enum RequestStatus {
   REJECTED
 }
 
+model House {
+  id          String   @id @default(uuid())
+  landlord_id String
+  landlord    User     @relation("LandlordHouses", fields: [landlord_id], references: [id], onDelete: Cascade)
+  name        String
+  address     String
+  floors      Int?
+  description String?
+  image_url   String?
+  rooms       Room[]
+  staffs      User[]   @relation("StaffHouses")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("houses")
+}
+
 model User {
-  id            String          @id @default(uuid())
-  username      String          @unique
-  email         String?         @unique
+  id            String     @id @default(uuid())
+  username      String     @unique
+  email         String?    @unique
   password_hash String
   full_name     String?
-  role          Role            @default(TENANT)
-  status        UserStatus      @default(ACTIVE)
+  role          Role       @default(TENANT)
+  status        UserStatus @default(ACTIVE)
   phone         String?
   bank_name     String?
   bank_account  String?
   bank_owner    String?
-  created_at    DateTime        @default(now())
-  updated_at    DateTime        @updatedAt
-  tenants       Tenant[]
-  notifications Notification[]
-  audit_logs    AuditLog[]      @relation("UserAuditLogs")
-  created_invoices Invoice[]    @relation("InvoiceCreator")
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  owned_houses   House[] @relation("LandlordHouses")
+  managed_houses House[] @relation("StaffHouses")
+
+  tenants          Tenant[]
+  notifications    Notification[]
+  audit_logs       AuditLog[]       @relation("UserAuditLogs")
+  created_invoices Invoice[]        @relation("InvoiceCreator")
+  PaymentReceipt   PaymentReceipt[]
 
   @@map("users")
 }
@@ -77,6 +101,8 @@ model Tenant {
   phone                String
   identity_card        String?
   identity_number      String?
+  dob                  DateTime?
+  hometown             String?
   contracts            Contract[]
   maintenance_requests MaintenanceRequest[]
   created_at           DateTime             @default(now())
@@ -87,54 +113,134 @@ model Tenant {
 
 model Room {
   id                   String               @id @default(uuid())
-  room_number          String               @unique
+  house_id             String
+  house                House                @relation(fields: [house_id], references: [id], onDelete: Cascade)
+  room_number          String
   room_type            String?
   price                Decimal              @db.Decimal(10, 2)
   area                 Float?
+  capacity             Int                  @default(1)
   status               RoomStatus           @default(AVAILABLE)
   description          String?
   contracts            Contract[]
+  services             RoomService[]
+  meter_readings       MeterReading[]
   maintenance_requests MaintenanceRequest[]
   created_at           DateTime             @default(now())
   updated_at           DateTime             @updatedAt
 
+  @@unique([house_id, room_number])
   @@map("rooms")
 }
 
-model Contract {
-  id          String         @id @default(uuid())
+model Service {
+  id          String        @id @default(uuid())
+  house_id    String?
+  name        String
+  unit        String
+  price       Decimal       @db.Decimal(10, 2)
+  description String?
+  rooms       RoomService[]
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+
+  @@map("services")
+}
+
+model RoomService {
+  id         String   @id @default(uuid())
+  room_id    String
+  room       Room     @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  service_id String
+  service    Service  @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+
+  @@unique([room_id, service_id])
+  @@map("room_services")
+}
+
+model MeterReading {
+  id          String   @id @default(uuid())
   room_id     String
-  room        Room           @relation(fields: [room_id], references: [id], onDelete: Cascade)
-  tenant_id   String
-  tenant      Tenant         @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
-  start_date  DateTime
-  end_date    DateTime
-  rent_price  Decimal        @db.Decimal(10, 2)
-  deposit     Decimal        @db.Decimal(10, 2)
-  status      ContractStatus @default(ACTIVE)
-  invoices    Invoice[]
-  created_at  DateTime       @default(now())
-  updated_at  DateTime       @updatedAt
+  room        Room     @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  type        String
+  month       Int
+  year        Int
+  old_index   Float
+  new_index   Float
+  consumption Float
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@unique([room_id, type, month, year])
+  @@map("meter_readings")
+}
+
+model Contract {
+  id            String           @id @default(uuid())
+  room_id       String
+  room          Room             @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  tenant_id     String
+  tenant        Tenant           @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  start_date    DateTime
+  end_date      DateTime
+  rent_price    Decimal          @db.Decimal(10, 2)
+  deposit       Decimal          @db.Decimal(10, 2)
+  payment_cycle Int              @default(1)
+  status        ContractStatus   @default(ACTIVE)
+  members       ContractMember[]
+  invoices      Invoice[]
+  created_at    DateTime         @default(now())
+  updated_at    DateTime         @updatedAt
 
   @@map("contracts")
 }
 
+model ContractMember {
+  id            String   @id @default(uuid())
+  contract_id   String
+  contract      Contract @relation(fields: [contract_id], references: [id], onDelete: Cascade)
+  full_name     String
+  identity_card String?
+  phone         String?
+  created_at    DateTime @default(now())
+
+  @@map("contract_members")
+}
+
 model Invoice {
-  id          String        @id @default(uuid())
+  id          String           @id @default(uuid())
   contract_id String
-  contract    Contract      @relation(fields: [contract_id], references: [id], onDelete: Cascade)
+  contract    Contract         @relation(fields: [contract_id], references: [id], onDelete: Cascade)
   title       String
   description String?
-  amount      Decimal       @db.Decimal(10, 2)
-  status      InvoiceStatus @default(PENDING)
-  issue_date  DateTime      @default(now())
+  amount      Decimal          @db.Decimal(10, 2)
+  paid_amount Decimal          @default(0) @db.Decimal(10, 2)
+  status      InvoiceStatus    @default(PENDING)
+  issue_date  DateTime         @default(now())
   due_date    DateTime
   creator_id  String?
-  creator     User?         @relation("InvoiceCreator", fields: [creator_id], references: [id], onDelete: SetNull)
-  created_at  DateTime      @default(now())
-  updated_at  DateTime      @updatedAt
+  creator     User?            @relation("InvoiceCreator", fields: [creator_id], references: [id], onDelete: SetNull)
+  items       InvoiceItem[]
+  receipts    PaymentReceipt[]
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
 
   @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoice_id  String
+  invoice     Invoice  @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  type        String
+  description String?
+  quantity    Float    @default(1)
+  unit_price  Decimal  @db.Decimal(10, 2)
+  amount      Decimal  @db.Decimal(10, 2)
+  created_at  DateTime @default(now())
+
+  @@map("invoice_items")
 }
 
 model MaintenanceRequest {
@@ -181,4 +287,19 @@ model AuditLog {
   created_at  DateTime @default(now())
 
   @@map("audit_logs")
+}
+
+model PaymentReceipt {
+  id             String   @id @default(uuid())
+  invoice_id     String
+  invoice        Invoice  @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  collector_id   String?
+  collector      User?    @relation(fields: [collector_id], references: [id], onDelete: SetNull)
+  amount         Decimal  @db.Decimal(10, 2)
+  payment_method String // CASH, BANK_TRANSFER
+  reference_code String? // Mã giao dịch ngân hàng
+  note           String?
+  created_at     DateTime @default(now())
+
+  @@map("payment_receipts")
 }

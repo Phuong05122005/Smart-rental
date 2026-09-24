@@ -21,6 +21,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
     "jsonwebtoken": "^9.0.3",
+    "ml-regression-multivariate-linear": "^2.0.4",
     "multer": "^2.3.0",
     "multer-storage-cloudinary": "^4.0.0",
     "node-cron": "^4.6.0"

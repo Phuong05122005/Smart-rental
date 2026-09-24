@@ -11,6 +11,9 @@ import TenantInvoices from './pages/TenantInvoices';
 import TenantMaintenance from './pages/TenantMaintenance';
 import AdminInvoices from './pages/AdminInvoices';
 import AdminMaintenance from './pages/AdminMaintenance';
+import Houses from './pages/Houses';
+import Services from './pages/Services';
+import MeterReadings from './pages/MeterReadings';
 import Rooms from './pages/Rooms';
 import Tenants from './pages/Tenants';
 import Contracts from './pages/Contracts';
@@ -61,6 +64,21 @@ const AppRoutes = () => {
         } />
         
         {/* All roles can see these */}
+        <Route path="houses" element={
+          <RoleRoute allowedRoles={['ADMIN', 'LANDLORD', 'STAFF']}>
+            <Houses />
+          </RoleRoute>
+        } />
+        <Route path="services" element={
+          <RoleRoute allowedRoles={['ADMIN', 'LANDLORD']}>
+            <Services />
+          </RoleRoute>
+        } />
+        <Route path="meter-readings" element={
+          <RoleRoute allowedRoles={['ADMIN', 'LANDLORD', 'STAFF']}>
+            <MeterReadings />
+          </RoleRoute>
+        } />
         <Route path="rooms" element={<Rooms />} />
         <Route path="tenants" element={<Tenants />} />
         <Route path="contracts" element={<Contracts />} />

@@ -1,68 +1,60 @@
 import { Request, Response } from 'express';
 import prisma from '../utils/prisma';
-import { logAudit } from '../utils/audit';
-import { AuthRequest } from '../middlewares/auth.middleware';
 
 export const getRooms = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { page = 1, limit = 10, search = '', status, sort = 'desc' } = req.query;
-    
-    const pageNumber = Number(page);
-    const limitNumber = Number(limit);
-    const skip = (pageNumber - 1) * limitNumber;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || '';
+    const status = req.query.status as string;
 
-    const whereClause: any = {};
-    if (search) {
-      whereClause.OR = [
-        { room_number: { contains: String(search), mode: 'insensitive' } },
-        { room_type: { contains: String(search), mode: 'insensitive' } }
-      ];
-    }
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      room_number: { contains: search, mode: 'insensitive' }
+    };
+    
     if (status) {
-      whereClause.status = status;
+      where.status = status;
     }
 
     const [rooms, total] = await Promise.all([
       prisma.room.findMany({
-        where: whereClause,
+        where,
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
         include: {
+          house: { select: { name: true } },
           contracts: {
             where: { status: 'ACTIVE' },
-            include: { tenant: true },
-            take: 1
+            include: { tenant: { select: { full_name: true, phone: true } } }
           }
-        },
-        orderBy: { created_at: sort === 'asc' ? 'asc' : 'desc' },
-        skip,
-        take: limitNumber
+        }
       }),
-      prisma.room.count({ where: whereClause })
+      prisma.room.count({ where })
     ]);
 
-    const formattedRooms = rooms.map((room: any) => ({
-      ...room,
-      current_tenant: room.contracts.length > 0 ? room.contracts[0].tenant.full_name : null
-    }));
-
     res.json({
-      data: formattedRooms,
+      data: rooms,
       meta: {
         total,
-        page: pageNumber,
-        totalPages: Math.ceil(total / limitNumber)
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
       }
     });
   } catch (error) {
-    console.error('[getRooms error]', error);
     res.status(500).json({ message: 'Lỗi server' });
   }
 };
 
-export const getRoom = async (req: Request, res: Response): Promise<void> => {
+export const getRoomById = async (req: Request, res: Response): Promise<void> => {
   try {
     const room = await prisma.room.findUnique({
-      where: { id: (req.params.id as string) },
+      where: { id: req.params.id as string },
       include: {
+        house: true,
         contracts: {
           include: { tenant: true }
         }
@@ -80,24 +72,16 @@ export const getRoom = async (req: Request, res: Response): Promise<void> => {
 
 export const createRoom = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { room_number, room_type, price, area, description, status } = req.body;
+    const { room_number, house_id, capacity, room_type, price, area, description, status } = req.body;
 
-    if (!room_number) {
-      res.status(400).json({ message: 'Số phòng là bắt buộc' });
-      return;
-    }
-    if (Number(price) <= 0) {
-      res.status(400).json({ message: 'Giá phòng phải lớn hơn 0' });
-      return;
-    }
-    if (Number(area) <= 0) {
-      res.status(400).json({ message: 'Diện tích phải lớn hơn 0' });
-      return;
-    }
+    if (!house_id) { res.status(400).json({ message: 'Vui lòng chọn nhà trọ' }); return; }
+    if (!room_number) { res.status(400).json({ message: 'Số phòng là bắt buộc' }); return; }
 
     const room = await prisma.room.create({
       data: {
         room_number,
+        house_id,
+        capacity: capacity ? Number(capacity) : 1,
         room_type,
         price: Number(price),
         area: Number(area),
@@ -107,31 +91,21 @@ export const createRoom = async (req: Request, res: Response): Promise<void> => 
     });
     res.status(201).json({ message: 'Thêm phòng thành công', data: room });
   } catch (error: any) {
-    if (error.code === 'P2002') {
-      res.status(400).json({ message: 'Số phòng đã tồn tại' });
-      return;
-    }
+    if (error.code === 'P2002') { res.status(400).json({ message: 'Số phòng đã tồn tại' }); return; }
     res.status(500).json({ message: 'Lỗi server' });
   }
 };
 
 export const updateRoom = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { room_number, room_type, price, area, description, status } = req.body;
-    
-    if (Number(price) <= 0) {
-      res.status(400).json({ message: 'Giá phòng phải lớn hơn 0' });
-      return;
-    }
-    if (Number(area) <= 0) {
-      res.status(400).json({ message: 'Diện tích phải lớn hơn 0' });
-      return;
-    }
+    const { room_number, house_id, capacity, room_type, price, area, description, status } = req.body;
 
     const room = await prisma.room.update({
-      where: { id: (req.params.id as string) },
+      where: { id: req.params.id as string },
       data: {
         room_number,
+        house_id,
+        capacity: capacity ? Number(capacity) : undefined,
         room_type,
         price: Number(price),
         area: Number(area),
@@ -140,76 +114,18 @@ export const updateRoom = async (req: Request, res: Response): Promise<void> => 
       }
     });
     res.json({ message: 'Cập nhật phòng thành công', data: room });
-  } catch (error: any) {
-    if (error.code === 'P2002') {
-      res.status(400).json({ message: 'Số phòng đã tồn tại' });
-      return;
-    }
+  } catch (error) {
     res.status(500).json({ message: 'Lỗi server' });
   }
 };
 
 export const deleteRoom = async (req: Request, res: Response): Promise<void> => {
   try {
-    const id = (req.params.id as string);
-
-    // Check for active contracts
-    const activeContracts = await prisma.contract.count({
-      where: {
-        room_id: id,
-        status: 'ACTIVE'
-      }
-    });
-
-    if (activeContracts > 0) {
-      res.status(400).json({ message: 'Không thể xóa phòng đang có khách thuê (Hợp đồng ACTIVE)' });
-      return;
-    }
-
     await prisma.room.delete({
-      where: { id: id as string }
+      where: { id: req.params.id as string }
     });
-
     res.json({ message: 'Xóa phòng thành công' });
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server' });
-  }
-};
-
-export const requestRent = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const roomId = req.params.id as string;
-    const user = req.user;
-    if (!user) return;
-
-    const room = await prisma.room.findUnique({ where: { id: roomId } });
-    if (!room || room.status !== 'AVAILABLE') {
-      res.status(400).json({ message: 'Phòng không tồn tại hoặc không còn trống.' });
-      return;
-    }
-
-    const tenant = await prisma.tenant.findUnique({ where: { user_id: user.id } });
-    const tenantName = tenant ? tenant.full_name : user.username;
-
-    // Lấy danh sách admin và landlord
-    const admins = await prisma.user.findMany({
-      where: { role: { in: ['ADMIN', 'LANDLORD'] } }
-    });
-
-    // Tạo thông báo cho các admin
-    for (const admin of admins) {
-      await prisma.notification.create({
-        data: {
-          user_id: admin.id,
-          title: 'Yêu cầu thuê phòng mới',
-          content: `Khách thuê ${tenantName} vừa gửi yêu cầu muốn thuê phòng ${room.room_number}.`,
-          type: 'RENT_REQUEST'
-        }
-      });
-    }
-
-    res.json({ message: 'Đã gửi yêu cầu thuê phòng thành công. Quản lý sẽ liên hệ với bạn sớm nhất.' });
-  } catch (error) {
-    res.status(500).json({ message: 'Lỗi server khi gửi yêu cầu' });
+    res.status(500).json({ message: 'Lỗi server hoặc phòng đang có hợp đồng' });
   }
 };

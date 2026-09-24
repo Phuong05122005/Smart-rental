@@ -8,9 +8,10 @@ import { Modal } from '../components/ui/Modal';
 import { ConfirmDialog } from '../components/ui/Dialog';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ErrorState } from '../components/ui/ErrorState';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getRooms, createRoom, updateRoom, deleteRoom, type Room } from '../services/roomService';
+import { getRooms, createRoom, updateRoom, deleteRoom, predictRoomPrice, type Room } from '../services/roomService';
+import { getHouses, type House } from '../services/houseService';
 import { useAuth } from '../contexts/AuthContext';
 
 const Rooms = () => {
@@ -31,6 +32,7 @@ const Rooms = () => {
 
   // Modals
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isAILoading, setIsAILoading] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
@@ -82,9 +84,28 @@ const Rooms = () => {
       });
     } else {
       setSelectedRoom(null);
-      setFormData({ room_number: '', room_type: '', price: '', area: '', description: '', status: 'AVAILABLE' as Room['status'] });
+      setFormData({ house_id: '', room_number: '', room_type: '', price: '', area: '', capacity: '1', description: '', status: 'AVAILABLE' as Room['status'] });
     }
     setIsFormOpen(true);
+  };
+
+  
+  const handlePredictPrice = async () => {
+    if (!formData.area) {
+      toast.error('Vui lòng nhập Diện tích trước để AI dự đoán');
+      return;
+    }
+    try {
+      setIsAILoading(true);
+      // Giả định capacity = 2 nếu người dùng chưa có trường capacity
+      const res = await predictRoomPrice(Number(formData.area), 2);
+      setFormData({ ...formData, price: res.data.predicted_price.toString() });
+      toast.success('AI đã gợi ý giá phòng: ' + res.data.predicted_price.toLocaleString() + ' ₫');
+    } catch (err) {
+      toast.error('Lỗi khi lấy dự đoán AI');
+    } finally {
+      setIsAILoading(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -257,6 +278,34 @@ const Rooms = () => {
       {/* Form Modal */}
       <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={selectedRoom ? 'Cập nhật phòng' : 'Thêm phòng mới'}>
         <form onSubmit={handleSave} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nhà trọ <span className="text-red-500">*</span>
+            </label>
+            <select
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              value={formData.house_id}
+              onChange={(e) => setFormData({ ...formData, house_id: e.target.value })}
+              required
+            >
+              <option value="">-- Chọn nhà trọ --</option>
+              {houses.map(h => (
+                <option key={h.id} value={h.id}>{h.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Sức chứa (người) <span className="text-red-500">*</span>
+            </label>
+            <Input
+              required
+              type="number"
+              min="1"
+              value={formData.capacity}
+              onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+            />
+          </div>
           <div>
             <label className="text-sm font-medium text-slate-700">Số phòng *</label>
             <Input required value={formData.room_number} onChange={e => setFormData({...formData, room_number: e.target.value})} />
