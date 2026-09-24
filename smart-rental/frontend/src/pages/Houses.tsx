@@ -209,67 +209,73 @@ const Houses = () => {
         onClose={() => setIsModalOpen(false)}
         title={editingHouse ? 'Sửa thông tin nhà trọ' : 'Thêm nhà trọ mới'}
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
               Tên nhà trọ <span className="text-red-500">*</span>
             </label>
             <Input
               required
+              className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="VD: Trọ 123"
+              placeholder="VD: Trọ Hoa Mai, CCMN 123..."
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
               Địa chỉ <span className="text-red-500">*</span>
             </label>
             <Input
               required
+              className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="VD: 123 Đường ABC..."
+              placeholder="VD: 123 Đường Nguyễn Văn A, Quận 1..."
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Số tầng
-            </label>
-            <Input
-              type="number"
-              min="1"
-              value={formData.floors}
-              onChange={(e) => setFormData({ ...formData, floors: e.target.value })}
-              placeholder="VD: 4"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                Số tầng
+              </label>
+              <Input
+                type="number"
+                min="1"
+                className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
+                value={formData.floors}
+                onChange={(e) => setFormData({ ...formData, floors: e.target.value })}
+                placeholder="VD: 4"
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
               Mô tả thêm
             </label>
             <textarea
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm transition-colors"
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Mô tả về nhà trọ..."
+              placeholder="Ghi chú thêm về bãi xe, cổng giờ giấc tự do..."
             />
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
             <Button
               type="button"
               variant="outline"
+              className="h-10 px-6 font-medium"
               onClick={() => setIsModalOpen(false)}
             >
               Hủy
             </Button>
-            <Button type="submit">
-              {editingHouse ? 'Lưu thay đổi' : 'Thêm mới'}
+            <Button type="submit" className="h-10 px-6 font-semibold bg-blue-600 hover:bg-blue-700 shadow-sm">
+              {editingHouse ? 'Lưu thay đổi' : 'Thêm nhà trọ'}
             </Button>
           </div>
         </form>
