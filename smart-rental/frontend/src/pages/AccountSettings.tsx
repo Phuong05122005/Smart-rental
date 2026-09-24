@@ -91,61 +91,69 @@ const AccountSettings = () => {
               <CardTitle className="text-lg font-semibold text-slate-800">Thông tin cá nhân</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <form onSubmit={handleProfileSubmit} className="space-y-5">
+              <form onSubmit={handleProfileSubmit} className="space-y-6">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1.5">Tên đăng nhập / Số điện thoại</label>
-                  <Input value={user?.username} disabled className="bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed font-mono text-sm" />
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tên đăng nhập / Số điện thoại</label>
+                  <Input value={user?.username} disabled className="bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed font-mono h-11 text-sm shadow-inner" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1.5">Họ và tên</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Họ và tên <span className="text-red-500">*</span></label>
                   <Input 
                     required 
                     value={profile.full_name} 
                     onChange={e => setProfile({...profile, full_name: e.target.value})} 
-                    className="border-slate-200 focus:border-blue-500 shadow-sm"
+                    className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
                   />
                 </div>
                 {user?.role !== 'TENANT' && (
-                  <div className="pt-4 border-t border-slate-100">
-                    <h4 className="font-semibold text-slate-800 mb-4">Thông tin nhận thanh toán (Dành cho Mã QR)</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="pt-5 border-t border-slate-100">
+                    <h4 className="font-bold text-slate-800 mb-5 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">💳</span>
+                      Thông tin nhận thanh toán (Dành cho Mã QR)
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
-                        <label className="text-sm font-medium text-slate-700 block mb-1.5">Tên Ngân Hàng (VD: MB, VCB)</label>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tên Ngân Hàng (VD: MB, VCB)</label>
                         <Input 
                           value={profile.bank_name} 
                           onChange={e => setProfile({...profile, bank_name: e.target.value})} 
+                          className="h-11 text-sm font-bold text-slate-800 shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase"
                           placeholder="MB"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-slate-700 block mb-1.5">Số tài khoản</label>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Số tài khoản</label>
                         <Input 
                           value={profile.bank_account} 
                           onChange={e => setProfile({...profile, bank_account: e.target.value})} 
+                          className="h-11 text-sm font-bold text-blue-700 font-mono shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20"
                           placeholder="0334812345"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="text-sm font-medium text-slate-700 block mb-1.5">Tên chủ tài khoản (Không dấu)</label>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tên chủ tài khoản (Không dấu)</label>
                         <Input 
                           value={profile.bank_owner} 
                           onChange={e => setProfile({...profile, bank_owner: e.target.value.toUpperCase()})} 
+                          className="h-11 text-sm font-bold text-slate-800 shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 uppercase"
                           placeholder="NGUYEN THAI PHUONG"
                         />
                       </div>
                     </div>
                   </div>
                 )}
-                <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1.5">Vai trò hệ thống</label>
-                  <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-                    <Shield className="w-4 h-4 text-slate-400" />
-                    <span className="font-semibold text-slate-700 text-sm">{user?.role}</span>
+                <div className="pt-5 border-t border-slate-100">
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Vai trò hệ thống</label>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg max-w-fit">
+                    <Shield className="w-5 h-5 text-slate-400" />
+                    <span className="font-bold text-slate-700 text-sm">{user?.role}</span>
                   </div>
                 </div>
-                <Button type="submit" disabled={profileLoading} className="w-full sm:w-auto h-10 px-6 font-medium">
-                  {profileLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
-                </Button>
+                <div className="pt-2">
+                  <Button type="submit" disabled={profileLoading} className="w-full sm:w-auto h-11 px-8 font-semibold bg-blue-600 hover:bg-blue-700 shadow-sm">
+                    {profileLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -158,42 +166,44 @@ const AccountSettings = () => {
               <CardTitle className="text-lg font-semibold text-slate-800">Đổi mật khẩu</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1.5">Mật khẩu hiện tại</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Mật khẩu hiện tại <span className="text-red-500">*</span></label>
                   <Input 
                     type="password" 
                     required 
                     value={passwords.currentPassword}
                     onChange={e => setPasswords({...passwords, currentPassword: e.target.value})}
-                    className="border-slate-200 focus:border-rose-500 shadow-sm"
+                    className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-rose-500 focus:ring-rose-500/20"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1.5">Mật khẩu mới</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Mật khẩu mới <span className="text-red-500">*</span></label>
                   <Input 
                     type="password" 
                     required 
                     minLength={6}
                     value={passwords.newPassword}
                     onChange={e => setPasswords({...passwords, newPassword: e.target.value})}
-                    className="border-slate-200 focus:border-rose-500 shadow-sm"
+                    className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-rose-500 focus:ring-rose-500/20"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-1.5">Nhập lại mật khẩu mới</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nhập lại mật khẩu mới <span className="text-red-500">*</span></label>
                   <Input 
                     type="password" 
                     required 
                     minLength={6}
                     value={passwords.confirmPassword}
                     onChange={e => setPasswords({...passwords, confirmPassword: e.target.value})}
-                    className="border-slate-200 focus:border-rose-500 shadow-sm"
+                    className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-rose-500 focus:ring-rose-500/20"
                   />
                 </div>
-                <Button type="submit" disabled={loading} className="w-full sm:w-auto h-10 px-6 font-medium bg-rose-600 hover:bg-rose-700 text-white border-transparent">
-                  {loading ? 'Đang lưu...' : 'Đổi mật khẩu'}
-                </Button>
+                <div className="pt-2">
+                  <Button type="submit" disabled={loading} className="w-full sm:w-auto h-11 px-8 font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-sm border-transparent">
+                    {loading ? 'Đang lưu...' : 'Đổi mật khẩu'}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
