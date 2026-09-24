@@ -45,7 +45,7 @@ const MeterReadings = () => {
       const filteredRooms = roomsRes.data.filter(r => r.house_id === selectedHouse);
       setRooms(filteredRooms);
 
-      const readingsData = await getMeterReadings(selectedHouse, month, year, type);
+      const readingsData = await getMeterReadings({ house_id: selectedHouse, month, year, type });
       setReadings(readingsData);
 
       const initialInput: Record<string, { old_index: string, new_index: string }> = {};

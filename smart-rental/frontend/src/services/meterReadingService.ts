@@ -15,7 +15,7 @@ export interface MeterReading {
   consumption: number;
 }
 
-export const getMeterReadings = async (params?: { month?: number, year?: number, house_id?: string }) => {
+export const getMeterReadings = async (params?: { month?: number, year?: number, house_id?: string, type?: string }) => {
   const response = await api.get('/meter-readings', { params });
   return response.data;
 };
