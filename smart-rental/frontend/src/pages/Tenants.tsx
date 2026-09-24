@@ -295,24 +295,29 @@ const Tenants = () => {
 
       {/* Form Modal */}
       <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={selectedTenant ? 'Cập nhật khách thuê' : 'Thêm khách thuê mới'}>
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-5">
           <div>
-            <label className="text-sm font-medium text-slate-700">Họ tên *</label>
-            <Input required value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} placeholder="Nguyễn Văn A" />
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Họ tên <span className="text-red-500">*</span></label>
+            <Input required className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} placeholder="VD: Nguyễn Văn A" />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">CCCD/Passport *</label>
-            <Input required value={formData.identity_number} onChange={e => setFormData({...formData, identity_number: e.target.value})} placeholder="001200334455" />
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">CCCD/Passport <span className="text-red-500">*</span></label>
+            <Input required className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.identity_number} onChange={e => setFormData({...formData, identity_number: e.target.value})} placeholder="VD: 001200334455" />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Số điện thoại *</label>
-            <Input required type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="0901234567" />
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Số điện thoại <span className="text-red-500">*</span></label>
+            <Input required type="tel" className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="VD: 0901234567" />
           </div>
           <div>
-            <label className="text-sm font-medium text-slate-700">Email</label>
-            <Input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="example@gmail.com" />
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Email</label>
+            <Input type="email" className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="VD: example@gmail.com" />
           </div>
-          <Button type="submit" className="w-full">Lưu lại</Button>
+          <div className="pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" className="h-11 px-6 font-medium" onClick={() => setIsFormOpen(false)}>Hủy</Button>
+              <Button type="submit" className="h-11 px-6 font-semibold bg-blue-600 hover:bg-blue-700 shadow-sm">{selectedTenant ? 'Lưu thay đổi' : 'Thêm khách thuê'}</Button>
+            </div>
+          </div>
         </form>
       </Modal>
 
