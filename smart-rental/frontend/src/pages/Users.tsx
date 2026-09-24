@@ -179,21 +179,21 @@ const Users = () => {
       </Card>
 
       <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title="Tạo tài khoản hệ thống mới">
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSave} className="space-y-5">
           <div>
-            <label className="text-sm font-medium">Tên đăng nhập</label>
-            <Input required value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} placeholder="admin2 / staff1" />
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tên đăng nhập <span className="text-red-500">*</span></label>
+            <Input required className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} placeholder="VD: admin2, ketoan..." />
           </div>
           <div>
-            <label className="text-sm font-medium">Họ và tên</label>
-            <Input required value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} placeholder="Nguyễn Văn B" />
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Họ và tên <span className="text-red-500">*</span></label>
+            <Input required className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.full_name} onChange={e => setFormData({...formData, full_name: e.target.value})} placeholder="VD: Nguyễn Văn B" />
           </div>
           <div>
-            <label className="text-sm font-medium">Mật khẩu</label>
-            <Input required type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Mật khẩu <span className="text-red-500">*</span></label>
+            <Input required type="password" className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="Nhập mật khẩu an toàn..." />
           </div>
           <div>
-            <label className="text-sm font-medium block mb-2">Vai trò hệ thống</label>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Vai trò hệ thống <span className="text-red-500">*</span></label>
             <div className="grid grid-cols-1 gap-3">
               {[
                 { id: 'ADMIN', title: 'Quản trị viên (ADMIN)', desc: 'Toàn quyền kiểm soát hệ thống, tài khoản.' },
@@ -203,20 +203,24 @@ const Users = () => {
                 <div 
                   key={r.id} 
                   onClick={() => setFormData({...formData, role: r.id})}
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors flex items-center gap-3 ${formData.role === r.id ? 'border-primary bg-blue-50 ring-1 ring-primary' : 'border-slate-200 hover:border-slate-300'}`}
+                  className={`p-4 border rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-4 ${formData.role === r.id ? 'border-blue-500 bg-blue-50/50 shadow-sm ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                 >
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.role === r.id ? 'border-primary' : 'border-slate-300'}`}>
-                    {formData.role === r.id && <div className="w-2 h-2 bg-primary rounded-full" />}
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${formData.role === r.id ? 'border-blue-600' : 'border-slate-300'}`}>
+                    {formData.role === r.id && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />}
                   </div>
                   <div>
-                    <div className="font-medium text-sm text-slate-800">{r.title}</div>
-                    <div className="text-xs text-slate-500">{r.desc}</div>
+                    <div className={`font-bold text-sm ${formData.role === r.id ? 'text-blue-900' : 'text-slate-700'}`}>{r.title}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{r.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-          <Button type="submit" className="w-full">Tạo tài khoản</Button>
+          
+          <div className="pt-2 border-t border-slate-100 flex justify-end gap-3">
+            <Button type="button" variant="outline" className="h-11 px-6 font-medium" onClick={() => setIsFormOpen(false)}>Hủy</Button>
+            <Button type="submit" className="h-11 px-6 font-semibold bg-blue-600 hover:bg-blue-700 shadow-sm">Tạo tài khoản</Button>
+          </div>
         </form>
       </Modal>
 
