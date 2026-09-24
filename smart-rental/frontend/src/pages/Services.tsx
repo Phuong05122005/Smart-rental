@@ -167,30 +167,45 @@ const Services = () => {
         )}
       </Card>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingService ? 'Sửa dịch vụ' : 'Thêm dịch vụ'}>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingService ? 'Sửa dịch vụ' : 'Thêm dịch vụ mới'}>
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm mb-1">Tên dịch vụ *</label>
-            <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="VD: Điện, Nước..." />
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tên dịch vụ <span className="text-red-500">*</span></label>
+            <Input required className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="VD: Điện sinh hoạt, Nước máy, Rác..." />
           </div>
-          <div>
-            <label className="block text-sm mb-1">Đơn vị tính *</label>
-            <Input required value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} placeholder="VD: kWh, m3, Tháng..." />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Đơn vị tính <span className="text-red-500">*</span></label>
+              <Input required className="h-11 text-sm font-medium shadow-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} placeholder="VD: kWh, m3, Tháng..." />
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Đơn giá (VNĐ) <span className="text-red-500">*</span></label>
+              <Input required type="number" min="0" className="h-11 text-sm font-bold shadow-sm text-blue-700 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+              {formData.price && (
+                <p className="text-[11px] text-slate-500 mt-1.5 font-medium flex items-center gap-1">
+                  Mức giá: <span className="text-green-700 font-bold bg-green-50 px-1.5 py-0.5 rounded border border-green-200">{Number(formData.price).toLocaleString('vi-VN')} ₫ / {formData.unit || 'đơn vị'}</span>
+                </p>
+              )}
+            </div>
           </div>
+
           <div>
-            <label className="block text-sm mb-1">Đơn giá (VNĐ) *</label>
-            <Input required type="number" min="0" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
-          </div>
-          <div>
-            <label className="block text-sm mb-1">Áp dụng cho nhà trọ</label>
-            <select className="w-full rounded-md border-gray-300 shadow-sm p-2" value={formData.house_id} onChange={e => setFormData({...formData, house_id: e.target.value})}>
-              <option value="">-- Tất cả nhà trọ --</option>
-              {houses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Áp dụng cho nhà trọ</label>
+            <select 
+              className="w-full px-4 h-11 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm cursor-pointer transition-colors"
+              value={formData.house_id} 
+              onChange={e => setFormData({...formData, house_id: e.target.value})}
+            >
+              <option value="">🌎 Áp dụng cho TẤT CẢ nhà trọ</option>
+              {houses.map(h => <option key={h.id} value={h.id}>🏠 {h.name}</option>)}
             </select>
+            <p className="text-xs text-slate-500 mt-2 font-medium">Nếu không chọn, dịch vụ này sẽ tự động khả dụng ở mọi nhà trọ.</p>
           </div>
-          <div className="flex justify-end gap-3 mt-6">
-            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Hủy</Button>
-            <Button type="submit">Lưu</Button>
+          
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button type="button" variant="outline" className="h-10 px-6 font-medium" onClick={() => setIsModalOpen(false)}>Hủy</Button>
+            <Button type="submit" className="h-10 px-6 font-semibold bg-blue-600 hover:bg-blue-700 shadow-sm">Lưu thông tin</Button>
           </div>
         </form>
       </Modal>
