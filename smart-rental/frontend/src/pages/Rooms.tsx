@@ -19,6 +19,7 @@ const Rooms = () => {
   const canEdit = user?.role === 'ADMIN' || user?.role === 'LANDLORD';
 
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [houses, setHouses] = useState<House[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -46,6 +47,16 @@ const Rooms = () => {
     status: 'AVAILABLE' as Room['status']
   });
 
+  
+  const fetchHouses = async () => {
+    try {
+      const data = await getHouses();
+      setHouses(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  
   const fetchRooms = async () => {
     setLoading(true);
     setError('');
