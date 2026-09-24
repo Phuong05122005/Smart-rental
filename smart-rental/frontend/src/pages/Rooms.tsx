@@ -288,80 +288,91 @@ const Rooms = () => {
 
       {/* Form Modal */}
       <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={selectedRoom ? 'Cập nhật phòng' : 'Thêm phòng mới'}>
-        <form onSubmit={handleSave} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nhà trọ <span className="text-red-500">*</span>
-            </label>
-            <select
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              value={formData.house_id}
-              onChange={(e) => setFormData({ ...formData, house_id: e.target.value })}
-              required
-            >
-              <option value="">-- Chọn nhà trọ --</option>
-              {houses.map(h => (
-                <option key={h.id} value={h.id}>{h.name}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sức chứa (người) <span className="text-red-500">*</span>
-            </label>
-            <Input
-              required
-              type="number"
-              min="1"
-              value={formData.capacity}
-              onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Số phòng *</label>
-            <Input required value={formData.room_number} onChange={e => setFormData({...formData, room_number: e.target.value})} />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Loại phòng</label>
-            <Input value={formData.room_type} onChange={e => setFormData({...formData, room_type: e.target.value})} placeholder="VD: Studio, 1PN..." />
-          </div>
+        <form onSubmit={handleSave} className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-slate-700">Giá phòng (VNĐ) *</label>
-              <Input type="number" required min="1" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
-              {formData.price && (
-                <p className="text-sm text-green-600 mt-1 font-medium">
-                  Hiển thị: {Number(formData.price).toLocaleString('vi-VN')} đ
-                </p>
-              )}
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                Nhà trọ <span className="text-red-500">*</span>
+              </label>
+              <select
+                className="w-full px-3 h-10 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm cursor-pointer transition-colors"
+                value={formData.house_id}
+                onChange={(e) => setFormData({ ...formData, house_id: e.target.value })}
+                required
+              >
+                <option value="" disabled>-- Chọn nhà trọ --</option>
+                {houses.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+              </select>
             </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Diện tích (m2) *</label>
-              <Input type="number" required min="1" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} />
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                Trạng thái
+              </label>
+              <select 
+                className="w-full px-3 h-10 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm cursor-pointer transition-colors"
+                value={formData.status}
+                onChange={e => setFormData({...formData, status: e.target.value as Room['status']})}
+              >
+                <option value="AVAILABLE">✨ Trống</option>
+                <option value="RENTED">🔒 Đang thuê</option>
+                <option value="MAINTENANCE">🔧 Bảo trì</option>
+              </select>
             </div>
           </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Trạng thái</label>
-            <select 
-              className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-light"
-              value={formData.status}
-              onChange={e => setFormData({...formData, status: e.target.value as Room['status']})}
-            >
-              <option value="AVAILABLE">Trống</option>
-              <option value="RENTED">Đang thuê</option>
-              <option value="MAINTENANCE">Bảo trì</option>
-            </select>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Số phòng <span className="text-red-500">*</span></label>
+              <Input required className="h-10 text-sm font-medium shadow-sm" value={formData.room_number} onChange={e => setFormData({...formData, room_number: e.target.value})} placeholder="VD: P.101" />
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Loại phòng</label>
+              <Input className="h-10 text-sm font-medium shadow-sm" value={formData.room_type} onChange={e => setFormData({...formData, room_type: e.target.value})} placeholder="VD: Studio, 1PN..." />
+            </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Sức chứa (người) <span className="text-red-500">*</span></label>
+              <Input required type="number" min="1" className="h-10 text-sm font-medium shadow-sm" value={formData.capacity} onChange={e => setFormData({...formData, capacity: e.target.value})} />
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Diện tích (m2) <span className="text-red-500">*</span></label>
+              <Input required type="number" min="1" className="h-10 text-sm font-medium shadow-sm" value={formData.area} onChange={e => setFormData({...formData, area: e.target.value})} />
+            </div>
+          </div>
+
           <div>
-            <label className="text-sm font-medium text-slate-700">Mô tả</label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Giá phòng (VNĐ) <span className="text-red-500">*</span>
+              </label>
+              <button type="button" onClick={handlePredictPrice} disabled={isAILoading} className="text-xs text-blue-700 hover:text-blue-900 flex items-center gap-1 font-bold bg-blue-100 hover:bg-blue-200 px-2.5 py-1.5 rounded-md shadow-sm transition-colors">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" /> {isAILoading ? 'Đang phân tích dữ liệu...' : '🤖 Dùng AI dự đoán giá'}
+              </button>
+            </div>
+            <Input type="number" required min="1" className="h-10 text-base font-bold shadow-sm text-blue-700 border-blue-200 focus:border-blue-500 focus:ring-blue-500/20" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="VD: 3000000" />
+            {formData.price && (
+              <p className="text-xs text-slate-500 mt-2 font-medium flex items-center gap-1">
+                Giá thuê hiển thị: <span className="text-green-700 font-bold bg-green-50 px-2 py-0.5 rounded border border-green-200">{Number(formData.price).toLocaleString('vi-VN')} ₫ / tháng</span>
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Mô tả thêm</label>
             <textarea 
-              className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-light"
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm transition-colors"
               rows={3}
+              placeholder="Tiện ích nội thất, hướng cửa, sổ hộ khẩu..."
               value={formData.description}
               onChange={e => setFormData({...formData, description: e.target.value})}
             />
           </div>
-          <Button type="submit" className="w-full">Lưu lại</Button>
+          
+          <div className="pt-2">
+            <Button type="submit" className="w-full h-11 font-semibold text-base bg-blue-600 hover:bg-blue-700 shadow-sm">Lưu thông tin phòng</Button>
+          </div>
         </form>
       </Modal>
 
